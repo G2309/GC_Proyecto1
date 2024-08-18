@@ -65,7 +65,7 @@ fn main() {
         }
     }
 
-    let mut player = Player::new(player_pos.0, player_pos.1, PI/3.0);
+    let mut player = Player::new(player_pos.0, player_pos.1, PI/3.0, PI/3.0);
 
     let window_width = WIDTH;
     let window_height = HEIGHT;
@@ -89,9 +89,19 @@ fn main() {
 
     window.limit_update_rate(Some(frame_delay));
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        render_map(&mut framebuffer, &map);
+    let mut mode = "2D";
 
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        
+        if window.is_key_down(Key::M){
+            mode = if mode == "2D" {"3D"} else {"2D"};
+        }
+
+        if mode == "2D" {
+            render_map(&mut framebuffer, &map);
+        } else {
+            break;
+        }
         input::process_events(&mut player, &window);
 
         raycasting::cast_ray(&player,&map,&mut framebuffer);

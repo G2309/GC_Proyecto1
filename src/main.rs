@@ -4,114 +4,152 @@ mod bitmap;
 mod map_loader;
 mod player;
 mod raycasting;
-mod input;
 
+use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
 use crate::color::Color;
 use crate::bitmap::write_bmp_file;
-use crate::map_loader::load_map;
-use crate::player::Player;
+use crate::map_loader::{load_map, print_map};
+use crate::player::{Player, process_event};
+use crate::raycasting::cast_ray;
+use minifb::{Window, WindowOptions, Key};
+use std::time::{Duration, Instant};
+use nalgebra_glm::Vec2;
 
-use minifb::{Key, Window, WindowOptions};
-use std::time::Duration;
-use std::f32::consts::PI;
-
-const WIDTH: usize = 800;
-const HEIGHT: usize = 600;
+const WIDTH: usize = 1000;
+const HEIGHT: usize = 800;
 const CELL_SIZE: usize = 50;
 
-// Funcion render para el mapa
-fn render_map(framebuffer: &mut FrameBuffer, map: &Vec<Vec<char>>) {
-    let cell_size = CELL_SIZE;
-    let background_color = Color::new(255,255,255);
-    let wall_color = Color::new(0,0,0);
-    let path_color = Color::new(200,200,200);
-    let player_color = Color::new(0,0,255);
-    let goal_color = Color::new(0,255,0);
+fn cell_to_color(cell: char) -> Color {
+    match cell {
+        '+' => Color::new(0, 255, 0),
+        '-' => Color::new(255, 255, 0),
+        '|' => Color::new(255, 165, 0),
+        'p' => Color::new(0, 0, 255),
+        'g' => Color::new(165, 165, 135),
+        ' ' => Color::new(200, 200, 200),
+        _ => Color::new(255, 255, 255),
+    }
+}
 
-    framebuffer.clear();
+fn draw_cell(framebuffer: &mut FrameBuffer, xo: usize, yo: usize, block_size: usize, cell: char) {
+    for x in xo..xo + block_size {
+        for y in yo..yo + block_size {
+            if cell != ' ' {
+                let color = cell_to_color(cell);
+                framebuffer.set_current_color(color);
+                framebuffer.point(x, y);
+            }
+        }
+    }
+}
 
-    for (y, row) in map.iter().enumerate() {
-        for (x, &cell) in row.iter().enumerate() {
-            let color = match cell {
-                '+' | '|' | '-' => wall_color,
-                ' ' => path_color,
-                'p' => player_color,
-                'g' => goal_color,
-                _ => background_color,
-            };
+fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
+    for row in 0..maze.len() {
+        for col in 0..maze[row].len() {
+            draw_cell(framebuffer, col * block_size, row * block_size, block_size, maze[row][col]);
+        }
+    }
+    framebuffer.set_current_color(Color::new(255, 0, 0));
+    framebuffer.point(player.pos.x as usize, player.pos.y as usize);
 
-            let y_revert = framebuffer.height - (y * cell_size) - cell_size;
+    let num_rays = 50;
+    for i in 0..num_rays {
+        let current_ray = i as f32 / num_rays as f32;
+        let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
+        cast_ray(framebuffer, maze, player, a, block_size, true);
+    }
+}
+
+fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
+    let num_rays = framebuffer.width;
+
+    for i in 0..framebuffer.width {
+        for j in 0..(framebuffer.height as f32 / 2.0) as usize {
+            framebuffer.set_current_color(Color::new(0, 0, 0));
+            framebuffer.point(i, j);
+        }
+        framebuffer.set_current_color(Color::new(135, 206, 235));
+        for j in (framebuffer.height / 2)..framebuffer.height {
+            framebuffer.point(i, j);
+        }
+    }
+
+    let hh = framebuffer.height as f32 / 2.0;
+    framebuffer.set_current_color(Color::new(255, 0, 0));
+    for i in 0..num_rays {
+        let current_ray = i as f32 / num_rays as f32;
+        let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
+        let intersect = cast_ray(framebuffer, maze, player, a, block_size, false);
+
+        let distance_to_wall = intersect.distance.max(0.1);
+        let distance_to_projection_plane = 50.0;
+        let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
+        let stake_top = (hh - (stake_height / 2.0)).max(0.0) as usize;
+        let stake_bottom = (hh + (stake_height / 2.0)).min(framebuffer.height as f32 - 1.0) as usize;
+
+        for y in stake_top..stake_bottom {
+            let color = cell_to_color(intersect.impact);
             framebuffer.set_current_color(color);
-
-            for dy in 0..cell_size {
-                for dx in 0..cell_size {
-                    framebuffer.point(x * cell_size + dx, y_revert + dy,);
-                };
-            };
+            framebuffer.point(i, y);
         }
     }
 }
 
 fn main() {
-    let map = load_map("map.txt");
-
-    let mut player_pos = (0.0,0.0);
-    for (y,row) in map.iter().enumerate() {
-        for (x,&cell) in row.iter().enumerate() {
-            if cell == 'p' {
-                player_pos = (x as f32, y as f32);
-            }
-        }
-    }
-
-    let mut player = Player::new(player_pos.0, player_pos.1, PI/3.0, PI/3.0);
-
     let window_width = WIDTH;
     let window_height = HEIGHT;
+    let block_size = CELL_SIZE;
+    let map = load_map("./src/map.txt");
 
     let framebuffer_width = WIDTH;
     let framebuffer_height = HEIGHT;
 
-    let frame_delay = Duration::from_millis(50);
+    let frame_delay = Duration::from_millis(30);
 
     let mut framebuffer = FrameBuffer::new(framebuffer_width, framebuffer_height);
+    framebuffer.set_current_color(Color::new(50, 50, 100));
+
 
     let mut window = Window::new(
-        "Shin Megami Copia | Esc para Salir",
+        "Shin Megami Copia - 2D/3D View",
         window_width,
         window_height,
         WindowOptions::default(),
     )
     .unwrap_or_else(|e| {
-        panic!("Error al crear la ventana: {}", e);
+        panic!("Unable to create window: {}", e);
     });
 
-    window.limit_update_rate(Some(frame_delay));
+    let mut player = Player {
+        pos: Vec2::new(100.0, 100.0),
+        a: 0.0,
+        fov: PI / 3.0,
+    };
 
-    let mut mode = "2D";
+    let mut last_time = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        
-        if window.is_key_down(Key::M){
-            mode = if mode == "2D" {"3D"} else {"2D"};
-        }
+        let current_time = Instant::now();
+        let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
+        last_time = current_time;
 
-        if mode == "2D" {
-            render_map(&mut framebuffer, &map);
+        let fps = 1.0/elapsed_time;
+        framebuffer.clear();
+
+        process_event(&window, &mut player, &map, block_size);
+
+        if window.is_key_down(Key::W) {
+            render3d(&mut framebuffer, &player, &map, block_size);
         } else {
-            break;
+            render2d(&mut framebuffer, &player, &map, block_size);
         }
-        input::process_events(&mut player, &window);
 
-        raycasting::cast_ray(&player,&map,&mut framebuffer);
-
-        let buffer: Vec<u32> = framebuffer.buffer.iter()
-            .map(|c| ((c.r as u32) << 16) | ((c.g as u32) << 8) | (c.b as u32))
-            .collect();
-
-        window.update_with_buffer(&buffer, framebuffer_width, framebuffer_height)
+        let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();
+        window.update_with_buffer(&pixel_buffer, framebuffer_width, framebuffer_height)
             .unwrap();
+        window.set_title(&format!("Shin Megami Copia - FPS: {:.2}",fps));
+        std::thread::sleep(frame_delay);
     }
-
 }
+

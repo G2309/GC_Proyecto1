@@ -31,7 +31,7 @@ impl FrameBuffer {
     // Dibuja un punto en las coordenadas (x, y) con el color actual
     pub fn point(&mut self, x: usize, y: usize) {
         let adjusted_y = self.height - 1 - y;
-        self.buffer[self.width * adjusted_y + x] = self.current_color;
+        self.buffer[self.width * y + x] = self.current_color;
         //self.buffer[self.width * y + x] = self.current_color;
     }
     // Establece el color de fondo

@@ -49,5 +49,9 @@ impl Color {
     pub fn print(&self) {
         println!("Color (r: {}, g: {}, b: {})", self.r, self.g, self.b);
     }
+
+    pub fn to_u32(&self) -> u32 {
+        ((self.r as u32) << 16) | ((self.g as u32) << 8) | (self.b as u32)
+    }
 }
 

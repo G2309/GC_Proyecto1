@@ -20,17 +20,6 @@ const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
 const CELL_SIZE: usize = 50;
 
-// Definir las dimensiones y ubicaciones de las secciones
-const SECTION_A_WIDTH: usize = 750;
-const SECTION_A_HEIGHT: usize = 600;
-
-const SECTION_B_WIDTH: usize = 200;
-const SECTION_B_HEIGHT: usize = 200;
-const SECTION_B_X: usize = WIDTH - SECTION_B_WIDTH - 10;
-const SECTION_B_Y: usize = 10;
-
-const SECTION_C_HEIGHT: usize = 150;
-
 fn cell_to_color(cell: char) -> Color {
     match cell {
         '+' => Color::new(0, 255, 0),
@@ -55,39 +44,40 @@ fn draw_cell(framebuffer: &mut FrameBuffer, xo: usize, yo: usize, block_size: us
     }
 }
 
-fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, offset_x: usize, offset_y: usize) {
+fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32) {
+    // Dibuja el mapa 2D en su sección correspondiente
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
-            draw_cell(framebuffer, col * block_size + offset_x, row * block_size + offset_y, block_size, maze[row][col]);
+            let scaled_block_size = (block_size as f32 * scale_factor) as usize;
+            let scaled_x = (xo as f32 + (col as f32 * scaled_block_size as f32)) as usize;
+            let scaled_y =  (yo as f32 + (row as f32 * scaled_block_size as f32)) as usize;
+            draw_cell(framebuffer, scaled_x, scaled_y, scaled_block_size, maze[row][col]);
         }
     }
-    framebuffer.set_current_color(Color::new(255, 0, 0));
-    framebuffer.point(player.pos.x as usize + offset_x, player.pos.y as usize + offset_y);
 
-    let num_rays = 1;
-    for i in 0..num_rays {
-        let current_ray = i as f32 / num_rays as f32;
-        let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
-        cast_ray(framebuffer, maze, player, a, block_size, true);
-    }
+    framebuffer.set_current_color(Color::new(255, 0, 0));
+    let player_x = (xo as f32 + (player.pos.x as f32 * scale_factor)) as usize;
+    let player_y = (yo as f32 + (player.pos.y as f32 * scale_factor)) as usize;
+    framebuffer.point(player_x, player_y);
+
+    // Dibuja los rayos
 }
 
-fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, offset_x: usize, offset_y: usize, width: usize, height: usize) {
-    let num_rays = width;
-    let hh = height as f32 / 2.0;
+fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
+    let num_rays = framebuffer.width;
 
-    for i in 0..width {
-        // Renderizar el cielo y el suelo
-        for j in 0..(height as f32 / 2.0) as usize {
+    for i in 0..framebuffer.width {
+        for j in 0..(framebuffer.height as f32 / 2.0) as usize {
             framebuffer.set_current_color(Color::new(0, 0, 0));
-            framebuffer.point(i + offset_x, j + offset_y);
+            framebuffer.point(i, j);
         }
         framebuffer.set_current_color(Color::new(135, 206, 235));
-        for j in (height / 2)..height {
-            framebuffer.point(i + offset_x, j + offset_y);
+        for j in (framebuffer.height / 2)..framebuffer.height {
+            framebuffer.point(i, j);
         }
     }
 
+    let hh = framebuffer.height as f32 / 2.0;
     framebuffer.set_current_color(Color::new(255, 0, 0));
     for i in 0..num_rays {
         let current_ray = i as f32 / num_rays as f32;
@@ -98,24 +88,14 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         let distance_to_projection_plane = 50.0;
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
         let stake_top = (hh - (stake_height / 2.0)).max(0.0) as usize;
-        let stake_bottom = (hh + (stake_height / 2.0)).min(height as f32 - 1.0) as usize;
+        let stake_bottom = (hh + (stake_height / 2.0)).min(framebuffer.height as f32 - 1.0) as usize;
 
         for y in stake_top..stake_bottom {
             let color = cell_to_color(intersect.impact);
             framebuffer.set_current_color(color);
-            framebuffer.point(i + offset_x, y + offset_y);
+            framebuffer.point(i, y);
         }
     }
-}
-
-fn render_hud(framebuffer: &mut FrameBuffer, width: usize, height: usize) {
-    framebuffer.set_current_color(Color::new(50, 50, 50)); // Color gris oscuro
-    for y in height..HEIGHT {
-        for x in 0..width {
-            framebuffer.point(x, y);
-        }
-    }
-    // Puedes agregar más detalles en el HUD aquí, como texto, barras de vida, etc.
 }
 
 fn main() {
@@ -155,20 +135,33 @@ fn main() {
         let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
         last_time = current_time;
 
-        let fps = 1.0/elapsed_time;
+        let fps = 1.0 / elapsed_time;
         framebuffer.clear();
 
         process_event(&window, &mut player, &map, block_size);
 
-        // Renderizar en las diferentes secciones
-        render3d(&mut framebuffer, &player, &map, block_size, 0, 0, SECTION_A_WIDTH, SECTION_A_HEIGHT);
-        render2d(&mut framebuffer, &player, &map, block_size / 4, SECTION_B_X, SECTION_B_Y);
-        render_hud(&mut framebuffer, WIDTH, HEIGHT - SECTION_C_HEIGHT);
+        // Renderiza el 3D en la sección A
+        render3d(&mut framebuffer, &player, &map, block_size);
+
+        let scale_factor = 0.38;
+
+        let xo = WIDTH - WIDTH/4; 
+        let yo = 0;
+
+        render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
+
+        // Renderiza un HUD simple en la sección C
+        framebuffer.set_current_color(Color::new(255, 255, 255));
+        for y in framebuffer.height * 2 / 3..framebuffer.height {
+            for x in 0..framebuffer.width {
+                framebuffer.point(x, y);
+            }
+        }
 
         let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();
         window.update_with_buffer(&pixel_buffer, framebuffer_width, framebuffer_height)
             .unwrap();
-        window.set_title(&format!("Shin Megami Copia - FPS: {:.2}",fps));
+        window.set_title(&format!("Shin Megami Copia - FPS: {:.2}", fps));
         std::thread::sleep(frame_delay);
     }
 }

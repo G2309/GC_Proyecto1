@@ -113,7 +113,9 @@ fn main() {
     let window_width = WIDTH;
     let window_height = HEIGHT;
     let block_size = CELL_SIZE;
-    let map = load_map("./src/map.txt");
+    
+    let map_data = load_map("./src/map.txt");
+    let map = map_data.map;
 
     let framebuffer_width = WIDTH;
     let framebuffer_height = HEIGHT;
@@ -134,19 +136,15 @@ fn main() {
     });
 
     let mut player = Player {
-        pos: Vec2::new(100.0, 100.0),
+        pos: map_data.player_pos * block_size as f32,
         a: 0.0,
         fov: PI / 3.0,
     };
 
     let mut enemies = Vec::new();
-    for row in 0..map.len() {
-        for col in 0..map[row].len() {
-            if map[row][col] == 'e' {
-                let enemy = Enemy::new(col as f32 * block_size as f32, row as f32 * block_size as f32);
-                enemies.push(enemy);
-            }
-        }
+    for enemy_pos in map_data.enemies_pos {
+        let enemy = Enemy::new(enemy_pos.x * block_size as f32, enemy_pos.y * block_size as f32);
+        enemies.push(enemy);
     }
 
     let mut last_time = Instant::now();
@@ -163,17 +161,14 @@ fn main() {
 
         move_enemies(&mut enemies, &player, &map, block_size);
 
-        // Renderiza el 3D en la sección A
         render3d(&mut framebuffer, &player, &map, block_size);
 
         let scale_factor = 0.38;
-
-        let xo = WIDTH - WIDTH/4; 
+        let xo = WIDTH - WIDTH / 4;
         let yo = 0;
 
         render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
 
-        // Renderiza un HUD simple en la sección C
         framebuffer.set_current_color(Color::new(255, 255, 255));
         for y in framebuffer.height * 2 / 3..framebuffer.height {
             for x in 0..framebuffer.width {
@@ -182,10 +177,10 @@ fn main() {
         }
 
         let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();
-        window.update_with_buffer(&pixel_buffer, framebuffer_width, framebuffer_height)
+        window
+            .update_with_buffer(&pixel_buffer, framebuffer_width, framebuffer_height)
             .unwrap();
         window.set_title(&format!("Shin Megami Copia - FPS: {:.2}", fps));
         std::thread::sleep(frame_delay);
     }
 }
-

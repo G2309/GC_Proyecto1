@@ -4,17 +4,18 @@ mod bitmap;
 mod map_loader;
 mod player;
 mod raycasting;
+mod enemy;
 
 use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
 use crate::color::Color;
-use crate::bitmap::write_bmp_file;
-use crate::map_loader::{load_map, print_map};
+use crate::map_loader::load_map;
 use crate::player::{Player, process_event};
 use crate::raycasting::cast_ray;
 use minifb::{Window, WindowOptions, Key};
 use std::time::{Duration, Instant};
 use nalgebra_glm::Vec2;
+use crate::enemy::Enemy;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -27,6 +28,7 @@ fn cell_to_color(cell: char) -> Color {
         '|' => Color::new(255, 165, 0),
         'p' => Color::new(0, 0, 255),
         'g' => Color::new(165, 165, 135),
+        'e' => Color::new(100, 100, 100),
         ' ' => Color::new(200, 200, 200),
         _ => Color::new(255, 255, 255),
     }
@@ -60,7 +62,6 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     let player_y = (yo as f32 + (player.pos.y as f32 * scale_factor)) as usize;
     framebuffer.point(player_x, player_y);
 
-    // Dibuja los rayos
 }
 
 fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
@@ -98,6 +99,16 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     }
 }
 
+fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize) {
+    for enemy in enemies.iter_mut() {
+        let distance = (enemy.pos - player.pos).magnitude();
+        if distance <= block_size as f32 * 3.0 {
+            enemy.move_towards(&player.pos, map, block_size);
+        }
+        
+    }
+}
+
 fn main() {
     let window_width = WIDTH;
     let window_height = HEIGHT;
@@ -128,6 +139,16 @@ fn main() {
         fov: PI / 3.0,
     };
 
+    let mut enemies = Vec::new();
+    for row in 0..map.len() {
+        for col in 0..map[row].len() {
+            if map[row][col] == 'e' {
+                let enemy = Enemy::new(col as f32 * block_size as f32, row as f32 * block_size as f32);
+                enemies.push(enemy);
+            }
+        }
+    }
+
     let mut last_time = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -139,6 +160,8 @@ fn main() {
         framebuffer.clear();
 
         process_event(&window, &mut player, &map, block_size);
+
+        move_enemies(&mut enemies, &player, &map, block_size);
 
         // Renderiza el 3D en la sección A
         render3d(&mut framebuffer, &player, &map, block_size);

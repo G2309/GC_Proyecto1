@@ -26,9 +26,7 @@ fn cell_to_color(cell: char) -> Color {
         '+' => Color::new(0, 255, 0),
         '-' => Color::new(255, 255, 0),
         '|' => Color::new(255, 165, 0),
-        'p' => Color::new(0, 0, 255),
         'g' => Color::new(165, 165, 135),
-        'e' => Color::new(100, 100, 100),
         ' ' => Color::new(200, 200, 200),
         _ => Color::new(255, 255, 255),
     }
@@ -46,7 +44,7 @@ fn draw_cell(framebuffer: &mut FrameBuffer, xo: usize, yo: usize, block_size: us
     }
 }
 
-fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32) {
+fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32, enemies: &Vec<Enemy>) {
     // Dibuja el mapa 2D en su sección correspondiente
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
@@ -57,12 +55,21 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         }
     }
 
-    framebuffer.set_current_color(Color::new(255, 0, 0));
+    // Dibuja al jugador en el mapa 2D
+    framebuffer.set_current_color(Color::new(255, 0, 0)); // Color rojo para el jugador
     let player_x = (xo as f32 + (player.pos.x as f32 * scale_factor)) as usize;
     let player_y = (yo as f32 + (player.pos.y as f32 * scale_factor)) as usize;
     framebuffer.point(player_x, player_y);
 
+    // Dibuja los enemigos en el mapa 2D
+    framebuffer.set_current_color(Color::new(0, 0, 255)); // Color azul para los enemigos
+    for enemy in enemies {
+        let enemy_x = (xo as f32 + (enemy.pos.x as f32 * scale_factor)) as usize;
+        let enemy_y = (yo as f32 + (enemy.pos.y as f32 * scale_factor)) as usize;
+        framebuffer.point(enemy_x, enemy_y);
+    }
 }
+
 
 fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize) {
     let num_rays = framebuffer.width;
@@ -99,16 +106,18 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     }
 }
 
-fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize) {
+fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, framebuffer: &mut FrameBuffer, scale_factor: f32, xo: usize, yo: usize) {
     for enemy in enemies.iter_mut() {
         let distance = (enemy.pos - player.pos).magnitude();
         if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
-        
+        framebuffer.set_current_color(Color::new(255,255,255));
+        let enemy_x = (xo as f32 + (enemy.pos.x as f32 * scale_factor)) as usize;
+        let enemy_y = (yo as f32 + (enemy.pos.y as f32 * scale_factor)) as usize;
+        framebuffer.point(enemy_x, enemy_y);
     }
 }
-
 fn main() {
     let window_width = WIDTH;
     let window_height = HEIGHT;
@@ -149,6 +158,11 @@ fn main() {
 
     let mut last_time = Instant::now();
 
+    // Declaramos scale_factor, xo y yo antes de usarlos en move_enemies
+    let scale_factor = 0.38;
+    let xo = WIDTH - WIDTH / 4;
+    let yo = 0;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let current_time = Instant::now();
         let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
@@ -159,15 +173,14 @@ fn main() {
 
         process_event(&window, &mut player, &map, block_size);
 
-        move_enemies(&mut enemies, &player, &map, block_size);
+        // Llamada a move_enemies con las variables ya declaradas
+        move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
 
         render3d(&mut framebuffer, &player, &map, block_size);
 
-        let scale_factor = 0.38;
-        let xo = WIDTH - WIDTH / 4;
-        let yo = 0;
+        //render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
+        render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies);
 
-        render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
 
         framebuffer.set_current_color(Color::new(255, 255, 255));
         for y in framebuffer.height * 2 / 3..framebuffer.height {
@@ -184,3 +197,4 @@ fn main() {
         std::thread::sleep(frame_delay);
     }
 }
+

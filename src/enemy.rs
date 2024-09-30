@@ -9,7 +9,7 @@ impl Enemy {
     pub fn new(x:f32,y:f32) -> Enemy {
         Enemy {
             pos: Vec2::new(x,y),
-            speed: 1.0,
+            speed: 3.0,
         }
     }
 

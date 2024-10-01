@@ -5,6 +5,7 @@ mod map_loader;
 mod player;
 mod raycasting;
 mod enemy;
+mod actions;
 
 use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
@@ -16,6 +17,7 @@ use minifb::{Window, WindowOptions, Key};
 use std::time::{Duration, Instant};
 use nalgebra_glm::Vec2;
 use crate::enemy::Enemy;
+use crate::actions::Actions;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -124,7 +126,7 @@ fn main() {
     let block_size = CELL_SIZE;
     
     let map_data = load_map("./src/map.txt");
-    let map = map_data.map;
+    let mut map = map_data.map;
 
     let framebuffer_width = WIDTH;
     let framebuffer_height = HEIGHT;
@@ -172,6 +174,10 @@ fn main() {
         framebuffer.clear();
 
         process_event(&window, &mut player, &map, block_size);
+
+        if window.is_key_down(Key::E) {
+            Actions::check_doors(&player,&mut map);
+        }
 
         // Llamada a move_enemies con las variables ya declaradas
         move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);

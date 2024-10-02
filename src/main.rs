@@ -16,10 +16,10 @@ use crate::player::{Player, process_event};
 use crate::raycasting::cast_ray;
 use minifb::{Window, WindowOptions, Key};
 use std::time::{Duration, Instant};
-use nalgebra_glm::Vec2;
 use crate::enemy::Enemy;
 use crate::actions::Actions;
 use texture::Texture;
+use std::collections::HashMap;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -75,7 +75,7 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
 }
 
 
-fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, wall_texture: &Texture) {
+fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, textures:&Vec<Texture>, wall_texture: &HashMap<char,usize>) {
     let num_rays = framebuffer.width;
 
     for i in 0..num_rays {
@@ -103,14 +103,18 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
         let stake_top = (hh - (stake_height / 2.0)).max(0.0) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)).min(framebuffer.height as f32 - 1.0) as usize;
-
-        let texture_x = ((intersect.distance % 1.0) * wall_texture.width as f32) as u32;
-
-        for y in stake_top..stake_bottom {
-            let texture_y = (((y as f32 - stake_top as f32) / stake_height as f32) * wall_texture.height as f32) as u32;
-            let color = wall_texture.get_pixel_color(texture_x, texture_y);
-            framebuffer.set_current_color(color);
-            framebuffer.point(i, y);
+        let wall_char = intersect.impact;
+        if let Some(&texture_index) = wall_texture.get(&wall_char) {
+            let wall_tex = &textures[texture_index];
+	        
+	        let texture_x = ((intersect.distance % 1.0) * wall_tex.width as f32) as u32;        
+	
+	        for y in stake_top..stake_bottom {
+	            let texture_y = (((y as f32 - stake_top as f32) / stake_height as f32) * wall_tex.height as f32) as u32;
+	            let color = wall_tex.get_pixel_color(texture_x, texture_y);
+	            framebuffer.set_current_color(color);
+	            framebuffer.point(i, y);
+            }
         }
     }
 }
@@ -136,7 +140,18 @@ fn main() {
     let map_data = load_map("./src/map.txt");
     let mut map = map_data.map;
 
-    let wall_texture = Texture::new("src/textures/WallB.png");
+    let textures = vec![
+        Texture::new("src/textures/WallB.png"),
+        Texture::new("src/textures/WallY.png"),
+        Texture::new("src/textures/WallG.png"),
+    ];
+
+    let wall_texture: HashMap<char, usize> = HashMap::from([
+        ('+', 0),
+        ('|', 0),
+        ('-', 0),
+        ('d', 1),
+    ]);
 
     let framebuffer_width = WIDTH;
     let framebuffer_height = HEIGHT;
@@ -192,7 +207,7 @@ fn main() {
         // Llamada a move_enemies con las variables ya declaradas
         move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
 
-        render3d(&mut framebuffer, &player, &map, block_size, &wall_texture);
+        render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
 
         //render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
         render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies);

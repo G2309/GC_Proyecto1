@@ -1,6 +1,5 @@
 use nalgebra_glm::Vec2;
 use crate::player::Player;
-use crate::map_loader::load_map;
 
 pub struct Actions;
 

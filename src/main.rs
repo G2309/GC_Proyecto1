@@ -228,6 +228,9 @@ fn main() {
             },
             GameState::Playing => {
                 // Aquí es donde está tu lógica de juego
+                if window.is_key_down(Key::E) {
+                    Actions::check_doors(&player,&mut map);
+                }
                 process_event(&window, &mut player, &map, block_size);
                 move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
                 render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);

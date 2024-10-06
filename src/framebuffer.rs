@@ -3,6 +3,7 @@
 //                          # 22779
 use crate::color::Color;
 use crate::bitmap::write_bmp_file;
+use crate::texture::Texture;
 
 pub struct FrameBuffer {
     pub width: usize,
@@ -132,6 +133,22 @@ impl FrameBuffer {
             if e2 <= dx {
                 err += dx;
                 y0 += sy;
+            }
+        }
+    }
+
+    pub fn draw_texture(&mut self, texture: &Texture, x: usize, y: usize) {
+        for tx in 0..texture.width {
+            for ty in 0..texture.height {
+                let color = texture.get_pixel_color(tx, ty);
+                let pixel_x = x + tx as usize;
+                let pixel_y = y + ty as usize;
+
+                // Verifica que esté dentro de los límites del framebuffer
+                if pixel_x < self.width && pixel_y < self.height {
+                    self.set_current_color(color);
+                    self.point(pixel_x, pixel_y);
+                }
             }
         }
     }

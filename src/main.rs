@@ -25,6 +25,12 @@ const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
 const CELL_SIZE: usize = 50;
 
+enum GameState {
+    Title,
+    Menu,
+    Playing,
+}
+
 fn cell_to_color(cell: char) -> Color {
     match cell {
         '+' => Color::new(0, 255, 0),
@@ -146,6 +152,9 @@ fn main() {
         Texture::new("src/textures/WallG.png"),
     ];
 
+    let title_texture = Texture::new("src/textures/title.jpg");
+    let menu_texture = Texture::new("src/textures/menu.jpg");
+
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
         ('|', 0),
@@ -190,6 +199,8 @@ fn main() {
     let xo = WIDTH - WIDTH / 4;
     let yo = 0;
 
+    let mut current_state = GameState::Title;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let current_time = Instant::now();
         let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
@@ -198,26 +209,30 @@ fn main() {
         let fps = 1.0 / elapsed_time;
         framebuffer.clear();
 
-        process_event(&window, &mut player, &map, block_size);
-
-        if window.is_key_down(Key::E) {
-            Actions::check_doors(&player,&mut map);
-        }
-
-        // Llamada a move_enemies con las variables ya declaradas
-        move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
-
-        render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
-
-        //render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor);
-        render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies);
-
-
-        framebuffer.set_current_color(Color::new(255, 255, 255));
-        for y in framebuffer.height * 2 / 3..framebuffer.height {
-            for x in 0..framebuffer.width {
-                framebuffer.point(x, y);
-            }
+        match current_state {
+            GameState::Title => {
+                // Renderiza la pantalla de título
+                framebuffer.draw_texture(&title_texture, 0, 0); // Asumiendo que tienes una función para dibujar texturas
+                if window.is_key_down(Key::C) {
+                    current_state = GameState::Menu; // Cambia al menú
+                }
+            },
+            GameState::Menu => {
+                // Renderiza el menú
+                framebuffer.draw_texture(&menu_texture, 0, 0);
+                if window.is_key_down(Key::B) {
+                    current_state = GameState::Playing; // Comienza el juego
+                } else if window.is_key_down(Key::R) {
+                    current_state = GameState::Title; // Regresa al título
+                }
+            },
+            GameState::Playing => {
+                // Aquí es donde está tu lógica de juego
+                process_event(&window, &mut player, &map, block_size);
+                move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
+                render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
+                render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies);
+            },
         }
 
         let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();
@@ -227,5 +242,6 @@ fn main() {
         window.set_title(&format!("Shin Megami Copia - FPS: {:.2}", fps));
         std::thread::sleep(frame_delay);
     }
+
 }
 

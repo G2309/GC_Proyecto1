@@ -23,6 +23,7 @@ use std::collections::HashMap;
 use rodio::{Decoder, OutputStream, Sink};
 use std::fs::File;
 use std::io::BufReader;
+use nalgebra_glm::Vec2;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -68,34 +69,27 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         }
     }
 
-    // Dibuja al jugador en el mapa 2D
-    //framebuffer.set_current_color(Color::new(255, 0, 0)); // Color rojo para el jugador
     let player_x = (xo as f32 + (player.pos.x as f32 * scale_factor)) as usize;
     let player_y = (yo as f32 + (player.pos.y as f32 * scale_factor)) as usize;
-    //framebuffer.point(player_x, player_y);
     framebuffer.draw2D_texture(player_texture, player_x, player_y);
 
-    // Dibuja los enemigos en el mapa 2D
-    //framebuffer.set_current_color(Color::new(0, 0, 255)); // Color azul para los enemigos
     for enemy in enemies {
         let enemy_x = (xo as f32 + (enemy.pos.x as f32 * scale_factor)) as usize;
         let enemy_y = (yo as f32 + (enemy.pos.y as f32 * scale_factor)) as usize;
         framebuffer.draw2D_texture(enemy_texture, enemy_x, enemy_y);
-        //framebuffer.point(enemy_x, enemy_y);
     }
 }
-
 
 fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, textures:&Vec<Texture>, wall_texture: &HashMap<char,usize>) {
     let num_rays = framebuffer.width;
 
     for i in 0..num_rays {
         for j in 0..(framebuffer.height as f32 / 2.0) as usize {
-            framebuffer.set_current_color(Color::new(0, 0, 0));  // Color del cielo
+            framebuffer.set_current_color(Color::new(0, 0, 0)); 
             framebuffer.point(i, j);
         }
 
-        framebuffer.set_current_color(Color::new(135, 206, 235));  // Color del suelo
+        framebuffer.set_current_color(Color::new(135, 206, 235)); 
         for j in (framebuffer.height / 2)..framebuffer.height {
             framebuffer.point(i, j);
         }
@@ -118,8 +112,7 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         if let Some(&texture_index) = wall_texture.get(&wall_char) {
             let wall_tex = &textures[texture_index];
 	        
-	        let texture_x = ((intersect.distance % 1.0) * wall_tex.width as f32) as u32;        
-	
+	        let texture_x = ((intersect.distance % 1.0) * wall_tex.width as f32) as u32; 	
 	        for y in stake_top..stake_bottom {
 	            let texture_y = (((y as f32 - stake_top as f32) / stake_height as f32) * wall_tex.height as f32) as u32;
 	            let color = wall_tex.get_pixel_color(texture_x, texture_y);
@@ -134,7 +127,7 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
 fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, framebuffer: &mut FrameBuffer, scale_factor: f32, xo: usize, yo: usize) {
     for enemy in enemies.iter_mut() {
         let distance = (enemy.pos - player.pos).magnitude();
-        if distance <= block_size as f32 * 3.0 {
+        if distance <= block_size as f32 * 2.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
         framebuffer.set_current_color(Color::new(255,255,255));
@@ -144,6 +137,43 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
     }
 }
 
+fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize) {
+    for enemy in enemies.iter_mut() {
+        let distance = (enemy.pos - player.pos).magnitude();
+        if distance <= block_size as f32 * 2.0 {
+            enemy.move_towards(&player.pos, map, block_size);
+        }
+    }
+}
+
+fn apply_billboarding(enemy_pos: &Vec2, player_pos: &Vec2) -> f32 {
+    let delta_x = enemy_pos.x as f32- player_pos.x as f32;
+    let delta_y = enemy_pos.y as f32 - player_pos.y as f32;
+    delta_y.atan2(delta_x)
+}
+
+fn render_enemies_3d(
+    framebuffer: &mut FrameBuffer, 
+    enemies: &Vec<Enemy>, 
+    player: &Player, 
+    enemy_texture: &Texture, 
+    block_size: usize, 
+    screen_distance: f32
+) {
+    for enemy in enemies {
+        let distance = (enemy.pos - player.pos).magnitude();
+        let scale_factor = block_size as f32 / distance; 
+        let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;
+        
+        let angle_to_player = apply_billboarding(&enemy.pos, &player.pos);
+        let sprite_width = enemy_texture.width as f32 * scale_factor;
+        let sprite_height = enemy_texture.height as f32 * scale_factor;
+
+        framebuffer.draw_texture_rotated(enemy_texture, enemy_screen_x as usize, angle_to_player, sprite_width as usize, sprite_height as usize);
+    }
+}
+
+
 fn play_audio(file_path: &str, sink: &Sink) {
     let file = File::open(file_path).unwrap();
     let source = Decoder::new(BufReader::new(file)).unwrap();
@@ -151,7 +181,7 @@ fn play_audio(file_path: &str, sink: &Sink) {
 }
 
 fn stop_audio(sink: &Sink) {
-    sink.stop();  // Detener la reproducción
+    sink.stop(); 
 }
 
 fn main() {
@@ -177,6 +207,7 @@ fn main() {
 
     let player_texture = Texture::new("src/textures/player-2D.png");
     let enemy_texture = Texture::new("src/textures/enemy-2D.png");
+    let enemy_texture3d = Texture::new("src/textures/enemy.png");
 
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
@@ -255,7 +286,9 @@ fn main() {
                 }
                 process_event(&window, &mut player, &map, block_size);
                 move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
+                move_enemies_3d(&mut enemies, &player, &map, block_size);
                 render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
+                render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0);
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
         }

@@ -57,7 +57,7 @@ fn draw_cell(framebuffer: &mut FrameBuffer, xo: usize, yo: usize, block_size: us
     }
 }
 
-fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32, enemies: &Vec<Enemy>) {
+fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32, enemies: &Vec<Enemy>, player_texture: &Texture, enemy_texture: &Texture) {
     // Dibuja el mapa 2D en su sección correspondiente
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
@@ -69,17 +69,19 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     }
 
     // Dibuja al jugador en el mapa 2D
-    framebuffer.set_current_color(Color::new(255, 0, 0)); // Color rojo para el jugador
+    //framebuffer.set_current_color(Color::new(255, 0, 0)); // Color rojo para el jugador
     let player_x = (xo as f32 + (player.pos.x as f32 * scale_factor)) as usize;
     let player_y = (yo as f32 + (player.pos.y as f32 * scale_factor)) as usize;
-    framebuffer.point(player_x, player_y);
+    //framebuffer.point(player_x, player_y);
+    framebuffer.draw2D_texture(player_texture, player_x, player_y);
 
     // Dibuja los enemigos en el mapa 2D
-    framebuffer.set_current_color(Color::new(0, 0, 255)); // Color azul para los enemigos
+    //framebuffer.set_current_color(Color::new(0, 0, 255)); // Color azul para los enemigos
     for enemy in enemies {
         let enemy_x = (xo as f32 + (enemy.pos.x as f32 * scale_factor)) as usize;
         let enemy_y = (yo as f32 + (enemy.pos.y as f32 * scale_factor)) as usize;
-        framebuffer.point(enemy_x, enemy_y);
+        framebuffer.draw2D_texture(enemy_texture, enemy_x, enemy_y);
+        //framebuffer.point(enemy_x, enemy_y);
     }
 }
 
@@ -173,6 +175,9 @@ fn main() {
     let title_texture = Texture::new("src/textures/title.jpg");
     let menu_texture = Texture::new("src/textures/menu.jpg");
 
+    let player_texture = Texture::new("src/textures/player-2D.png");
+    let enemy_texture = Texture::new("src/textures/enemy-2D.png");
+
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
         ('|', 0),
@@ -251,7 +256,7 @@ fn main() {
                 process_event(&window, &mut player, &map, block_size);
                 move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
                 render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
-                render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies);
+                render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
         }
 

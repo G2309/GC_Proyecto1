@@ -137,6 +137,16 @@ impl FrameBuffer {
         }
     }
 
+    pub fn draw2D_texture(&mut self, texture: &Texture, x: usize, y: usize) {
+        for tex_x in 0..texture.width {
+            for tex_y in 0..texture.height {
+                let color = texture.get_pixel_color(tex_x, tex_y);
+                self.set_current_color(color);
+                self.point(x + tex_x as usize, y + tex_y as usize);
+            }
+        }
+    }
+
     pub fn draw_texture(&mut self, texture: &Texture, x: usize, y: usize) {
         for tx in 0..texture.width {
             for ty in 0..texture.height {

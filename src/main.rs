@@ -20,6 +20,9 @@ use crate::enemy::Enemy;
 use crate::actions::Actions;
 use texture::Texture;
 use std::collections::HashMap;
+use rodio::{Decoder, OutputStream, Sink};
+use std::fs::File;
+use std::io::BufReader;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -138,7 +141,22 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
         framebuffer.point(enemy_x, enemy_y);
     }
 }
+
+fn play_audio(file_path: &str, sink: &Sink) {
+    let file = File::open(file_path).unwrap();
+    let source = Decoder::new(BufReader::new(file)).unwrap();
+    sink.append(source);
+}
+
+fn stop_audio(sink: &Sink) {
+    sink.stop();  // Detener la reproducción
+}
+
 fn main() {
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let menu_sink = Sink::try_new(&stream_handle).unwrap();
+    let game_sink = Sink::try_new(&stream_handle).unwrap();
+
     let window_width = WIDTH;
     let window_height = HEIGHT;
     let block_size = CELL_SIZE;
@@ -147,7 +165,7 @@ fn main() {
     let mut map = map_data.map;
 
     let textures = vec![
-        Texture::new("src/textures/WallB.png"),
+        Texture::new("src/textures/WallB1.png"),
         Texture::new("src/textures/WallY.png"),
         Texture::new("src/textures/WallG.png"),
     ];
@@ -194,7 +212,6 @@ fn main() {
 
     let mut last_time = Instant::now();
 
-    // Declaramos scale_factor, xo y yo antes de usarlos en move_enemies
     let scale_factor = 0.38;
     let xo = WIDTH - WIDTH / 4;
     let yo = 0;
@@ -211,23 +228,23 @@ fn main() {
 
         match current_state {
             GameState::Title => {
-                // Renderiza la pantalla de título
-                framebuffer.draw_texture(&title_texture, 0, 0); // Asumiendo que tienes una función para dibujar texturas
+                framebuffer.draw_texture(&title_texture, 0, 0); 
+                play_audio("src/music/game.mp3",&menu_sink);
                 if window.is_key_down(Key::C) {
-                    current_state = GameState::Menu; // Cambia al menú
+                    current_state = GameState::Menu; 
                 }
             },
             GameState::Menu => {
-                // Renderiza el menú
                 framebuffer.draw_texture(&menu_texture, 0, 0);
                 if window.is_key_down(Key::B) {
-                    current_state = GameState::Playing; // Comienza el juego
+                    current_state = GameState::Playing;
+                    stop_audio(&menu_sink);
+                    play_audio("src/music/game1.mp3", &game_sink);
                 } else if window.is_key_down(Key::R) {
-                    current_state = GameState::Title; // Regresa al título
+                    current_state = GameState::Title; 
                 }
             },
             GameState::Playing => {
-                // Aquí es donde está tu lógica de juego
                 if window.is_key_down(Key::E) {
                     Actions::check_doors(&player,&mut map);
                 }

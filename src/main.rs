@@ -59,7 +59,6 @@ fn draw_cell(framebuffer: &mut FrameBuffer, xo: usize, yo: usize, block_size: us
 }
 
 fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, xo: usize, yo: usize, scale_factor: f32, enemies: &Vec<Enemy>, player_texture: &Texture, enemy_texture: &Texture) {
-    // Dibuja el mapa 2D en su sección correspondiente
     for row in 0..maze.len() {
         for col in 0..maze[row].len() {
             let scaled_block_size = (block_size as f32 * scale_factor) as usize;
@@ -149,7 +148,15 @@ fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char
 fn apply_billboarding(enemy_pos: &Vec2, player_pos: &Vec2) -> f32 {
     let delta_x = enemy_pos.x as f32- player_pos.x as f32;
     let delta_y = enemy_pos.y as f32 - player_pos.y as f32;
-    delta_y.atan2(delta_x)
+    let angle = delta_y.atan2(delta_x);
+
+    if angle > PI{
+        angle - 2.0 * PI
+    } else if angle < -PI {
+        angle + 2.0 * PI
+    } else {
+        angle
+    }
 }
 
 fn render_enemies_3d(
@@ -158,10 +165,18 @@ fn render_enemies_3d(
     player: &Player, 
     enemy_texture: &Texture, 
     block_size: usize, 
-    screen_distance: f32
+    screen_distance: f32,
+    map: &Vec<Vec<char>>,
 ) {
     for enemy in enemies {
         let distance = (enemy.pos - player.pos).magnitude();
+
+        let ray_result = cast_ray(framebuffer, map, player, (enemy.pos - player.pos).angle(&Vec2::new(1.0,0.0)), block_size, false);
+
+        if ray_result.distance < distance {
+            continue;
+        }
+
         let scale_factor = block_size as f32 / distance; 
         let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;
         
@@ -288,7 +303,7 @@ fn main() {
                 move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
                 move_enemies_3d(&mut enemies, &player, &map, block_size);
                 render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
-                render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0);
+                render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0,&map);
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
         }

@@ -145,20 +145,6 @@ fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char
     }
 }
 
-fn apply_billboarding(enemy_pos: &Vec2, player_pos: &Vec2) -> f32 {
-    let delta_x = enemy_pos.x as f32- player_pos.x as f32;
-    let delta_y = enemy_pos.y as f32 - player_pos.y as f32;
-    let angle = delta_y.atan2(delta_x);
-
-    if angle > PI{
-        angle - 2.0 * PI
-    } else if angle < -PI {
-        angle + 2.0 * PI
-    } else {
-        angle
-    }
-}
-
 fn render_enemies_3d(
     framebuffer: &mut FrameBuffer, 
     enemies: &Vec<Enemy>, 
@@ -170,36 +156,41 @@ fn render_enemies_3d(
 ) {
     for enemy in enemies {
         let distance = (enemy.pos - player.pos).magnitude();
+        
+        // Ángulo entre el jugador y el enemigo
+        let angle_to_enemy = (enemy.pos - player.pos).angle(&Vec2::new(player.a.cos(), player.a.sin()));
 
-        // Realiza un raycast para verificar si hay una pared entre el jugador y el enemigo
-        let angle_to_enemy = (enemy.pos - player.pos).angle(&Vec2::new(1.0, 0.0));
-        let ray_result = cast_ray(framebuffer, map, player, angle_to_enemy, block_size, false);
-
-        // Si hay una pared entre el jugador y el enemigo, no renderizamos el enemigo
-        if ray_result.distance < distance {
+        // Verificar si el enemigo está en el campo de visión del jugador
+        let half_fov = player.fov / 2.0;
+        if angle_to_enemy.abs() > half_fov {
+            // El enemigo está fuera del campo de visión, no lo renderizamos
             continue;
         }
 
-        // Factor de escala basado en la distancia al jugador (cuanto más cerca, más grande)
+        // Raycast para ver si hay obstáculos entre el jugador y el enemigo
+        let ray_result = cast_ray(framebuffer, map, player, angle_to_enemy, block_size, false);
+        if ray_result.distance < distance {
+            continue; // Hay una pared bloqueando al enemigo
+        }
+
+        // Si está en el FOV, ajustamos su tamaño según la distancia
         let scale_factor = block_size as f32 / distance; 
         
-        // Coordenadas de la pantalla donde renderizar el enemigo
         let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;
         let enemy_screen_y = framebuffer.height as f32 / 2.0 - (enemy.pos.y - player.pos.y) * screen_distance / distance;
 
-        // Ancho y alto del sprite del enemigo escalados según la distancia
         let sprite_width = enemy_texture.width as f32 * scale_factor;
         let sprite_height = enemy_texture.height as f32 * scale_factor;
 
-        // Renderizar la textura del enemigo en la posición calculada
-        framebuffer.draw_texture(
+        framebuffer.draw_texture_scaled(
             enemy_texture, 
             enemy_screen_x as usize, 
-            enemy_screen_y as usize 
+            enemy_screen_y as usize,
+            sprite_width as usize,
+            sprite_height as usize
         );
     }
 }
-
 
 fn play_audio(file_path: &str, sink: &Sink) {
     let file = File::open(file_path).unwrap();

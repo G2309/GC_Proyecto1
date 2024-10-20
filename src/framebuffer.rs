@@ -163,38 +163,24 @@ impl FrameBuffer {
         }
     }
 
-     pub fn draw_texture_rotated(
-         &mut self, 
+    pub fn draw_texture_scaled(
+        &mut self, 
         texture: &Texture, 
         x: usize, 
-        angle: f32, 
-        sprite_width: usize, 
-        sprite_height: usize
+        y: usize, 
+        width: usize, 
+        height: usize
     ) {
-        let cos_angle = angle.cos();
-        let sin_angle = angle.sin();
-
-        for tex_x in 0..texture.width {
-            for tex_y in 0..texture.height {
-                let color = texture.get_pixel_color(tex_x, tex_y);
-
-                // Aplicar la rotación de cada punto
-                let centered_x = tex_x as f32 - (sprite_width as f32 / 2.0);
-                let centered_y = tex_y as f32 - (sprite_height as f32 / 2.0);
-
-                let rotated_x = centered_x * cos_angle - centered_y * sin_angle;
-                let rotated_y = centered_x * sin_angle + centered_y * cos_angle;
-
-                let screen_x = x as isize + rotated_x.round() as isize;
-                let screen_y = (self.height as isize / 2) + rotated_y.round() as isize;
-
-                // Verifica que las coordenadas están dentro del framebuffer
-                if screen_x >= 0 && screen_x < self.width as isize && screen_y >= 0 && screen_y < self.height as isize {
-                    self.set_current_color(color);
-                    self.point(screen_x as usize, screen_y as usize);
-                }
+        for tex_x in 0..width {
+            for tex_y in 0..height {
+                let texture_x = (tex_x as f32 * texture.width as f32 / width as f32) as u32;
+                let texture_y = (tex_y as f32 * texture.height as f32 / height as f32) as u32;
+                let color = texture.get_pixel_color(texture_x, texture_y);
+                self.set_current_color(color);
+                self.point(x + tex_x, y + tex_y);
             }
         }
     }
+
 }
 

@@ -171,20 +171,32 @@ fn render_enemies_3d(
     for enemy in enemies {
         let distance = (enemy.pos - player.pos).magnitude();
 
-        let ray_result = cast_ray(framebuffer, map, player, (enemy.pos - player.pos).angle(&Vec2::new(1.0,0.0)), block_size, false);
+        // Realiza un raycast para verificar si hay una pared entre el jugador y el enemigo
+        let angle_to_enemy = (enemy.pos - player.pos).angle(&Vec2::new(1.0, 0.0));
+        let ray_result = cast_ray(framebuffer, map, player, angle_to_enemy, block_size, false);
 
+        // Si hay una pared entre el jugador y el enemigo, no renderizamos el enemigo
         if ray_result.distance < distance {
             continue;
         }
 
+        // Factor de escala basado en la distancia al jugador (cuanto más cerca, más grande)
         let scale_factor = block_size as f32 / distance; 
-        let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;
         
-        let angle_to_player = apply_billboarding(&enemy.pos, &player.pos);
+        // Coordenadas de la pantalla donde renderizar el enemigo
+        let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;
+        let enemy_screen_y = framebuffer.height as f32 / 2.0 - (enemy.pos.y - player.pos.y) * screen_distance / distance;
+
+        // Ancho y alto del sprite del enemigo escalados según la distancia
         let sprite_width = enemy_texture.width as f32 * scale_factor;
         let sprite_height = enemy_texture.height as f32 * scale_factor;
 
-        framebuffer.draw_texture_rotated(enemy_texture, enemy_screen_x as usize, angle_to_player, sprite_width as usize, sprite_height as usize);
+        // Renderizar la textura del enemigo en la posición calculada
+        framebuffer.draw_texture(
+            enemy_texture, 
+            enemy_screen_x as usize, 
+            enemy_screen_y as usize 
+        );
     }
 }
 

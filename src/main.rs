@@ -157,23 +157,18 @@ fn render_enemies_3d(
     for enemy in enemies {
         let distance = (enemy.pos - player.pos).magnitude();
         
-        // Ángulo entre el jugador y el enemigo
         let angle_to_enemy = (enemy.pos - player.pos).angle(&Vec2::new(player.a.cos(), player.a.sin()));
 
-        // Verificar si el enemigo está en el campo de visión del jugador
         let half_fov = player.fov / 2.0;
         if angle_to_enemy.abs() > half_fov {
-            // El enemigo está fuera del campo de visión, no lo renderizamos
             continue;
         }
 
-        // Raycast para ver si hay obstáculos entre el jugador y el enemigo
         let ray_result = cast_ray(framebuffer, map, player, angle_to_enemy, block_size, false);
         if ray_result.distance < distance {
-            continue; // Hay una pared bloqueando al enemigo
+            continue; 
         }
 
-        // Si está en el FOV, ajustamos su tamaño según la distancia
         let scale_factor = block_size as f32 / distance; 
         
         let enemy_screen_x = framebuffer.width as f32 / 2.0 + (enemy.pos.x - player.pos.x) * screen_distance / distance;

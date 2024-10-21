@@ -35,6 +35,7 @@ impl FrameBuffer {
         self.buffer[self.width * y + x] = self.current_color;
         //self.buffer[self.width * y + x] = self.current_color;
     }
+
     // Establece el color de fondo
     pub fn set_background_color(&mut self, color: Color) {
         self.background_color = color;
@@ -164,23 +165,31 @@ impl FrameBuffer {
     }
 
     pub fn draw_texture_scaled(
-        &mut self, 
-        texture: &Texture, 
-        x: usize, 
-        y: usize, 
-        width: usize, 
-        height: usize
+    &mut self, 
+    texture: &Texture, 
+    x: usize, 
+    y: usize, 
+    width: usize, 
+    height: usize
     ) {
-        for tex_x in 0..width {
-            for tex_y in 0..height {
-                let texture_x = (tex_x as f32 * texture.width as f32 / width as f32) as u32;
-                let texture_y = (tex_y as f32 * texture.height as f32 / height as f32) as u32;
-                let color = texture.get_pixel_color(texture_x, texture_y);
+    for tex_x in 0..width {
+        for tex_y in 0..height {
+            let texture_x = (tex_x as f32 * texture.width as f32 / width as f32) as u32;
+            let texture_y = (tex_y as f32 * texture.height as f32 / height as f32) as u32;
+            let color = texture.get_pixel_color(texture_x, texture_y);
+
+            // Verifica que esté dentro de los límites del framebuffer
+            let pixel_x = x + tex_x;
+            let pixel_y = y + tex_y;
+            if pixel_x < self.width && pixel_y < self.height {
                 self.set_current_color(color);
-                self.point(x + tex_x, y + tex_y);
+                self.point(pixel_x, pixel_y);
             }
         }
     }
+    }
+
+
 
 }
 

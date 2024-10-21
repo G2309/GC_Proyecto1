@@ -126,7 +126,7 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
 fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, framebuffer: &mut FrameBuffer, scale_factor: f32, xo: usize, yo: usize) {
     for enemy in enemies.iter_mut() {
         let distance = (enemy.pos - player.pos).magnitude();
-        if distance <= block_size as f32 * 2.0 {
+        if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
         framebuffer.set_current_color(Color::new(255,255,255));
@@ -139,7 +139,7 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
 fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize) {
     for enemy in enemies.iter_mut() {
         let distance = (enemy.pos - player.pos).magnitude();
-        if distance <= block_size as f32 * 2.0 {
+        if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
     }
@@ -210,8 +210,8 @@ fn main() {
     let mut map = map_data.map;
 
     let textures = vec![
-        Texture::new("src/textures/WallB1.png"),
-        Texture::new("src/textures/WallY.png"),
+        Texture::new("src/textures/wall.jpg"),
+        Texture::new("src/textures/wall-break.jpg"),
         Texture::new("src/textures/WallG.png"),
     ];
 

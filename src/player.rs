@@ -10,7 +10,7 @@ pub struct Player {
 }
 
 pub fn process_event(window: &Window, player: &mut Player, maze: &Vec<Vec<char>>, block_size: usize) {
-    const move_speed: f32 = 6.0;
+    const move_speed: f32 = 6.5;
     const rotation_speed: f32 = 0.1;
 
     if window.is_key_down(Key::Left) {

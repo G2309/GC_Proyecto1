@@ -33,6 +33,7 @@ enum GameState {
     Title,
     Menu,
     Playing,
+    Combat
 }
 
 fn cell_to_color(cell: char) -> Color {
@@ -136,10 +137,12 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
     }
 }
 
-fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize) {
+fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, current_state: &mut GameState) {
     for enemy in enemies.iter_mut() {
         let distance = (enemy.pos - player.pos).magnitude();
-        if distance <= block_size as f32 * 3.0 {
+        if distance <= block_size as f32 * 0.5 {
+            *current_state = GameState::Combat;
+        } else if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
     }
@@ -197,6 +200,16 @@ fn stop_audio(sink: &Sink) {
     sink.stop(); 
 }
 
+fn render_combat_ui(framebuffer: &mut FrameBuffer, player_hp: i32, player_mp: i32) {
+    framebuffer.draw_rect(50, framebuffer.height - 150, framebuffer.width - 100, 100, Color::new(50, 50, 50));
+    framebuffer.draw_rect_outline(50, framebuffer.height - 150, framebuffer.width - 100, 100, Color::new(255, 255, 255));
+    
+    framebuffer.draw_rect(50, framebuffer.height - 170, player_hp as usize * 2, 15, Color::new(255, 0, 0));
+    framebuffer.draw_rect(50, framebuffer.height - 150, player_mp as usize * 2, 15, Color::new(0, 0, 255));
+
+}
+
+
 fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let menu_sink = Sink::try_new(&stream_handle).unwrap();
@@ -251,6 +264,8 @@ fn main() {
         pos: map_data.player_pos * block_size as f32,
         a: 0.0,
         fov: PI / 3.0,
+        hp: 100,
+        mp: 50
     };
 
     let mut enemies = Vec::new();
@@ -299,11 +314,14 @@ fn main() {
                 }
                 process_event(&window, &mut player, &map, block_size);
                 move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
-                move_enemies_3d(&mut enemies, &player, &map, block_size);
+                move_enemies_3d(&mut enemies, &player, &map, block_size, &mut current_state);
                 render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
                 render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0,&map);
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
+            GameState::Combat => {
+                    render_combat_ui(&mut framebuffer, 35, 50);
+            }
         }
 
         let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();

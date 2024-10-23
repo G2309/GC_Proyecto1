@@ -189,6 +189,38 @@ impl FrameBuffer {
     }
     }
 
+    pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+        for row in y..(y + height).min(self.height) {
+            for col in x..(x + width).min(self.width) {
+                self.set_current_color(color);
+                self.point(col, row);
+            }
+        }
+    }
+    
+    pub fn draw_rect_outline(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+        for col in x..(x + width).min(self.width) {
+            if y < self.height {  // línea superior
+                self.set_current_color(color);
+                self.point(col, y);
+            }
+            if y + height < self.height { 
+                self.set_current_color(color);
+                self.point(col, y + height - 1);
+            }
+        }
+        for row in y..(y + height).min(self.height) {
+            if x < self.width {  // línea izquierda
+                self.set_current_color(color);
+                self.point(x, row);
+            }
+            if x + width < self.width { 
+                self.set_current_color(color);
+                self.point(x + width - 1, row);
+            }
+        }
+    }
+
 
 
 }

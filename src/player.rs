@@ -5,7 +5,9 @@ pub struct Player {
     pub pos: Vec2,
     pub a: f32,
     pub fov: f32,
+    pub max_hp: i32,
     pub hp: i32,
+    pub max_mp: i32,
     pub mp: i32
 }
 

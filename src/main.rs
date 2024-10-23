@@ -200,13 +200,28 @@ fn stop_audio(sink: &Sink) {
     sink.stop(); 
 }
 
-fn render_combat_ui(framebuffer: &mut FrameBuffer, player_hp: i32, player_mp: i32) {
-    framebuffer.draw_rect(50, framebuffer.height - 150, framebuffer.width - 100, 100, Color::new(50, 50, 50));
-    framebuffer.draw_rect_outline(50, framebuffer.height - 150, framebuffer.width - 100, 100, Color::new(255, 255, 255));
-    
-    framebuffer.draw_rect(50, framebuffer.height - 170, player_hp as usize * 2, 15, Color::new(255, 0, 0));
-    framebuffer.draw_rect(50, framebuffer.height - 150, player_mp as usize * 2, 15, Color::new(0, 0, 255));
+fn render_combat_ui(framebuffer: &mut FrameBuffer, player_maxhp: i32, player_hp: i32, player_maxmp: i32, player_mp: i32, background_texture: &Texture) {
+    framebuffer.draw_texture(&background_texture, 0, 0); 
 
+    let bar_width = 100;
+    let bar_height = 20;
+    let hp_bar_x = 25; 
+    let mp_bar_x = 25;
+
+    framebuffer.draw_rect(hp_bar_x, 575, 275, 200, Color::new(0, 0, 0));
+    framebuffer.draw_rect_outline(hp_bar_x, 575, 275, 200, Color::new(255, 255, 255)); // HP Contorno
+
+    framebuffer.draw_rect(hp_bar_x, 600, bar_width, bar_height, Color::new(50, 50, 50)); // HP Bar fondo
+    framebuffer.draw_rect(mp_bar_x, 640, bar_width, bar_height, Color::new(50, 50, 50)); // MP Bar fondo
+
+    framebuffer.draw_rect_outline(hp_bar_x, 600, bar_width, bar_height, Color::new(255, 255, 255)); // HP Contorno
+    framebuffer.draw_rect_outline(mp_bar_x, 640, bar_width, bar_height, Color::new(255, 255, 255)); // MP Contorno
+
+    let hp_percentage = player_maxhp as usize * 2; 
+    let mp_percentage = player_maxmp as usize * 2;
+
+    framebuffer.draw_rect(hp_bar_x, 600, hp_percentage, bar_height, Color::new(255, 0, 0)); // HP llena
+    framebuffer.draw_rect(mp_bar_x,  640, mp_percentage, bar_height, Color::new(0, 0, 255)); // MP llena
 }
 
 
@@ -234,6 +249,8 @@ fn main() {
     let player_texture = Texture::new("src/textures/player-2D.png");
     let enemy_texture = Texture::new("src/textures/enemy-2D.png");
     let enemy_texture3d = Texture::new("src/textures/enemy.png");
+
+    let background_texture = Texture::new("src/textures/Battle01.png");
 
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
@@ -264,7 +281,9 @@ fn main() {
         pos: map_data.player_pos * block_size as f32,
         a: 0.0,
         fov: PI / 3.0,
+        max_hp: 100,
         hp: 100,
+        max_mp: 50,
         mp: 50
     };
 
@@ -320,7 +339,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, 35, 50);
+                    render_combat_ui(&mut framebuffer, player.max_hp, player.hp, player.max_mp, player.mp, &background_texture);
             }
         }
 

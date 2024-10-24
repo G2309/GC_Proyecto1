@@ -142,6 +142,11 @@ impl FrameBuffer {
         for tex_x in 0..texture.width {
             for tex_y in 0..texture.height {
                 let color = texture.get_pixel_color(tex_x, tex_y);
+                
+                if color.r == 0 && color.g == 0 && color.b ==0 {
+                    continue;
+                }
+
                 self.set_current_color(color);
                 self.point(x + tex_x as usize, y + tex_y as usize);
             }
@@ -177,6 +182,10 @@ impl FrameBuffer {
             let texture_x = (tex_x as f32 * texture.width as f32 / width as f32) as u32;
             let texture_y = (tex_y as f32 * texture.height as f32 / height as f32) as u32;
             let color = texture.get_pixel_color(texture_x, texture_y);
+
+            if color.r == 0 && color.g == 0 && color.b == 0 {
+                continue;
+            }
 
             // Verifica que esté dentro de los límites del framebuffer
             let pixel_x = x + tex_x;

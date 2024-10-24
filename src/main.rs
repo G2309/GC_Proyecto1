@@ -354,7 +354,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, &party, &background_texture);
+                    render_combat_ui(&mut framebuffer, &party, &enemy_texture3d, &background_texture);
             }
         }
 

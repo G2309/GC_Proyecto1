@@ -7,9 +7,13 @@ use crate::Party;
 pub fn render_combat_ui(
     framebuffer: &mut FrameBuffer,
     party: &Party,
+    enemy_texture: &Texture,
     background_texture: &Texture,
     ) {
     framebuffer.draw_texture(&background_texture, 0, 0); 
+
+    // draw enemy
+    framebuffer.draw2D_texture(&enemy_texture, 350, 100);
 
     let bar_height = 20;
     let hp_bar_x = 26; 
@@ -34,7 +38,7 @@ pub fn render_combat_ui(
         render_text(framebuffer, &mp_text, 150 + (325 * index), 640, Color::new(255, 255, 255));
 
         // Textura del jugador
-        framebuffer.draw_texture(&player_data.texture, 125 + (325 * index), 655);
+        framebuffer.draw2D_texture(&player_data.texture, 125 + (325 * index), 655);
         if index == 0 as usize {
             render_text(framebuffer, "Walter", 140 + (325 * index), 765, Color::new(255, 255, 255));
         } else if index == 1 as usize {

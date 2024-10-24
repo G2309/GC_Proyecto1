@@ -3,17 +3,20 @@ use crate::render_text;
 use crate::FrameBuffer;
 use crate::Texture;
 use crate::Party;
+use crate::EnemiesData;
 
 pub fn render_combat_ui(
     framebuffer: &mut FrameBuffer,
     party: &Party,
-    enemy_texture: &Texture,
+    enemiesdata: &EnemiesData,
     background_texture: &Texture,
     ) {
     framebuffer.draw_texture(&background_texture, 0, 0); 
 
     // draw enemy
-    framebuffer.draw2D_texture(&enemy_texture, 350, 100);
+    for (index, enemies) in enemiesdata.enemies.iter().enumerate() {
+        framebuffer.draw2D_texture(&enemies.enemy_texture, 350, 100);
+    }
 
     let bar_height = 20;
     let hp_bar_x = 26; 

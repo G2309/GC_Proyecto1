@@ -1,4 +1,5 @@
 use nalgebra_glm::Vec2;
+use crate::texture::Texture;
 
 pub struct Enemy {
     pub pos: Vec2,
@@ -22,6 +23,7 @@ impl Enemy {
 
         if map[j][i] == ' ' {
             self.pos = new_pos;
+
         }
 
     }

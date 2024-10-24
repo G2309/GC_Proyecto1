@@ -9,6 +9,7 @@ mod actions;
 mod texture;
 mod combat;
 mod party;
+mod enemiesParty;
 
 use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
@@ -29,6 +30,7 @@ use nalgebra_glm::Vec2;
 use rusttype::{Font, Scale, point};
 use combat::render_combat_ui;
 use party::Party;
+use enemiesParty::EnemiesData;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -271,6 +273,13 @@ fn main() {
     party.add_player(105, 105, 15, 15, player_1_portrait);
     party.add_player(75, 75, 100, 100, player_2_portrait);
 
+    // Enemies
+    let mut enemies_data = EnemiesData::new();
+
+    let enemy_0_texture = Texture::new("src/textures/enemy.png");
+
+    enemies_data.add_enemy(100, 100, 50, 50, [String::from("agi"), String::from("zan"), String::from("charge")].to_vec(), enemy_0_texture);
+
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
         ('|', 0),
@@ -354,7 +363,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, &party, &enemy_texture3d, &background_texture);
+                    render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture);
             }
         }
 

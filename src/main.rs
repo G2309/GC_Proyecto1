@@ -267,8 +267,8 @@ fn main() {
     let player_1_portrait = Texture::new("src/textures/portrait02.png");
     let player_2_portrait = Texture::new("src/textures/portrait03.png");
 
-    party.add_player(100, 100, 50, 50, player_0_portrait);
-    party.add_player(125, 125, 15, 15, player_1_portrait);
+    party.add_player(85, 85, 50, 50, player_0_portrait);
+    party.add_player(105, 105, 15, 15, player_1_portrait);
     party.add_player(75, 75, 100, 100, player_2_portrait);
 
     let wall_texture: HashMap<char, usize> = HashMap::from([
@@ -354,7 +354,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, 100, 100, 50, 30, &background_texture, &player_0_portrait);
+                    render_combat_ui(&mut framebuffer, &party, &background_texture);
             }
         }
 

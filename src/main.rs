@@ -7,6 +7,8 @@ mod raycasting;
 mod enemy;
 mod actions;
 mod texture;
+mod combat;
+mod party;
 
 use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
@@ -24,6 +26,9 @@ use rodio::{Decoder, OutputStream, Sink};
 use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
+use rusttype::{Font, Scale, point};
+use combat::render_combat_ui;
+use party::Party;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -200,36 +205,31 @@ fn stop_audio(sink: &Sink) {
     sink.stop(); 
 }
 
-fn render_combat_ui(
-    framebuffer: &mut FrameBuffer,
-    player_maxhp: i32, 
-    player_hp: i32, 
-    player_maxmp: i32, 
-    player_mp: i32, 
-    background_texture: &Texture,
-    player_1_texture: &Texture,
-    ) {
-    framebuffer.draw_texture(&background_texture, 0, 0); 
+fn render_text(framebuffer: &mut FrameBuffer, text: &str, x: usize, y: usize, color: Color) {
+    // Cargar la fuente
+    let font_data = include_bytes!("textures/GohuFont11NerdFont-Regular.ttf") as &[u8];
+    let font = Font::try_from_bytes(font_data).unwrap();
 
-    let bar_height = 20;
-    let hp_bar_x = 25; 
-    let mp_bar_x = 25;
+    let scale = Scale {
+        x: 20.0, 
+        y: 20.0,
+    };
 
-    framebuffer.draw_rect(hp_bar_x, 575, 275, 200, Color::new(0, 0, 0));
-    framebuffer.draw_rect_outline(hp_bar_x, 575, 275, 200, Color::new(255, 255, 255)); // HP Contorno
-    
-    framebuffer.draw_rect(hp_bar_x, 600, player_hp as usize, bar_height, Color::new(50, 50, 50)); // HP Bar fondo
-    framebuffer.draw_rect(mp_bar_x, 640, player_mp as usize, bar_height, Color::new(50, 50, 50)); // MP Bar fondo
+    let start_point = point(0.0, 0.0);
 
-    framebuffer.draw_rect(hp_bar_x, 600, player_maxhp as usize, bar_height, Color::new(255, 0, 0)); // HP llena
-    framebuffer.draw_rect(mp_bar_x,  640, player_maxmp as usize, bar_height, Color::new(0, 0, 255)); // MP llena
+    for glyph in font.layout(text, scale, start_point) {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            glyph.draw(|gx, gy, v| {
+                let pixel_x = x + gx as usize + bounding_box.min.x as usize;
+                let pixel_y = y + gy as usize + bounding_box.min.y as usize;
 
-    framebuffer.draw_rect_outline(hp_bar_x, 600, player_maxhp as usize, bar_height, Color::new(255, 255, 255)); // HP Contorno
-    framebuffer.draw_rect_outline(mp_bar_x, 640, player_maxmp as usize, bar_height, Color::new(255, 255, 255)); // MP Contorno
-
-    // Textura de los personajes
-    framebuffer.draw_texture(&player_1_texture, 100, 675);
-
+                if v > 0.5 {
+                    framebuffer.set_current_color(color);
+                    framebuffer.point(pixel_x, pixel_y);
+                }
+            });
+        }
+    }
 }
 
 
@@ -260,7 +260,16 @@ fn main() {
 
     let background_texture = Texture::new("src/textures/Battle01.png");
 
+    // Party
+    let mut party = Party::new();
+
     let player_0_portrait = Texture::new("src/textures/portrait01.png");
+    let player_1_portrait = Texture::new("src/textures/portrait02.png");
+    let player_2_portrait = Texture::new("src/textures/portrait03.png");
+
+    party.add_player(100, 100, 50, 50, player_0_portrait);
+    party.add_player(125, 125, 15, 15, player_1_portrait);
+    party.add_player(75, 75, 100, 100, player_2_portrait);
 
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
@@ -290,11 +299,7 @@ fn main() {
     let mut player = Player {
         pos: map_data.player_pos * block_size as f32,
         a: 0.0,
-        fov: PI / 3.0,
-        max_hp: 100,
-        hp: 100,
-        max_mp: 50,
-        mp: 50
+        fov: PI / 3.0
     };
 
     let mut enemies = Vec::new();
@@ -349,7 +354,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, player.max_hp, player.hp, player.max_mp, player.mp, &background_texture, &player_0_portrait);
+                    render_combat_ui(&mut framebuffer, 100, 100, 50, 30, &background_texture, &player_0_portrait);
             }
         }
 

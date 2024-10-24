@@ -1,14 +1,11 @@
 use nalgebra_glm::{Vec2};
 use minifb::{Window, Key};
+use crate::texture::Texture;
 
 pub struct Player {
     pub pos: Vec2,
     pub a: f32,
-    pub fov: f32,
-    pub max_hp: i32,
-    pub hp: i32,
-    pub max_mp: i32,
-    pub mp: i32
+    pub fov: f32
 }
 
 pub fn process_event(window: &Window, player: &mut Player, maze: &Vec<Vec<char>>, block_size: usize) {
@@ -43,8 +40,6 @@ pub fn process_event(window: &Window, player: &mut Player, maze: &Vec<Vec<char>>
         }
     }
 }
-
-
 
 fn is_wall(map: &Vec<Vec<char>>, x: f32, y: f32, block_size: usize) -> bool {
     let j = (y / block_size as f32) as usize;

@@ -269,16 +269,16 @@ fn main() {
     let player_1_portrait = Texture::new("src/textures/portrait02.png");
     let player_2_portrait = Texture::new("src/textures/portrait03.png");
 
-    party.add_player(85, 35, 50, 50, [String::from("zio"), String::from("zan")].to_vec(), player_0_portrait);
-    party.add_player(105, 105, 25, 25, [String::from("dia")].to_vec(), player_1_portrait);
-    party.add_player(75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(), player_2_portrait);
+    party.add_player(String::from("Walter"), 85, 35, 50, 50, [String::from("zio"), String::from("zan")].to_vec(), player_0_portrait);
+    party.add_player(String::from("Flynn"), 105, 105, 25, 25, [String::from("dia")].to_vec(), player_1_portrait);
+    party.add_player(String::from("Isabeu"), 75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(), player_2_portrait);
 
     // Enemies
     let mut enemies_data = EnemiesData::new();
 
     let enemy_0_texture = Texture::new("src/textures/enemy.png");
 
-    enemies_data.add_enemy(100, 100, 50, 50, [String::from("agi"), String::from("zan"), String::from("charge")].to_vec(), enemy_0_texture);
+    enemies_data.add_enemy(String::from("Preta"),100, 100, 50, 50, [String::from("agi"), String::from("zan"), String::from("charge")].to_vec(), enemy_0_texture);
 
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),

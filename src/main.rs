@@ -269,7 +269,7 @@ fn main() {
     let player_1_portrait = Texture::new("src/textures/portrait02.png");
     let player_2_portrait = Texture::new("src/textures/portrait03.png");
 
-    party.add_player(String::from("Walter"), 85, 35, 50, 50, [String::from("zio"), String::from("zan")].to_vec(),
+    party.add_player(String::from("Walter"), 85, 85, 50, 50, [String::from("zio"), String::from("zan")].to_vec(),
         [].to_vec(), player_0_portrait);
     party.add_player(String::from("Flynn"), 105, 105, 25, 25, [String::from("dia")].to_vec(),
         [].to_vec(), player_1_portrait);

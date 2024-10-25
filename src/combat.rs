@@ -93,6 +93,19 @@ pub fn render_combat_ui(
         framebuffer.draw_rect(hp_bar_x + (325 * index), 764, 10, 10, turn_color);
         framebuffer.draw_rect_outline(hp_bar_x + (325 * index), 764, 10, 10, Color::new(255, 255, 255));
     }
+    
+    let actions = ["Attack", "Defend", "Spell", "Pass"];
+    let mut y_pos = 170;
+
+    framebuffer.draw_rect(26, 125, 275, 150, Color::new(0, 0, 0));
+    framebuffer.draw_rect_outline(26, 125, 275, 150, Color::new(255, 255, 255));
+    
+    render_text(framebuffer,"What would you do?", 30, 145, Color::new(255, 255, 255));
+
+    for action in actions.iter() {
+        render_text(framebuffer, action, 30, y_pos, Color::new(255,255,255));
+        y_pos += 25;
+    } 
 }
 
 pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesData) {

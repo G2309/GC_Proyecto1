@@ -4,6 +4,7 @@ use crate::texture::Texture;
 pub struct Enemy {
     pub pos: Vec2,
     pub speed: f32,
+    pub is_visible: bool,
 }
 
 impl Enemy {
@@ -11,6 +12,7 @@ impl Enemy {
         Enemy {
             pos: Vec2::new(x,y),
             speed: 3.0,
+            is_visible: true,
         }
     }
 

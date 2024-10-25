@@ -81,6 +81,7 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     framebuffer.draw2D_texture(player_texture, player_x, player_y);
 
     for enemy in enemies {
+        if !enemy.is_visible {continue;}
         let enemy_x = (xo as f32 + (enemy.pos.x as f32 * scale_factor)) as usize;
         let enemy_y = (yo as f32 + (enemy.pos.y as f32 * scale_factor)) as usize;
         framebuffer.draw2D_texture(enemy_texture, enemy_x, enemy_y);
@@ -146,9 +147,11 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
 
 fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, current_state: &mut GameState) {
     for enemy in enemies.iter_mut() {
+        if !enemy.is_visible {continue;}
         let distance = (enemy.pos - player.pos).magnitude();
         if distance <= block_size as f32 * 0.5 {
             *current_state = GameState::Combat;
+            enemy.is_visible = false;
         } else if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
         }
@@ -165,6 +168,7 @@ fn render_enemies_3d(
     map: &Vec<Vec<char>>,
 ) {
     for enemy in enemies {
+        if !enemy.is_visible {continue;}
         let distance = (enemy.pos - player.pos).magnitude();
         
         let angle_to_enemy = (enemy.pos - player.pos).angle(&Vec2::new(player.a.cos(), player.a.sin()));
@@ -370,27 +374,25 @@ fn main() {
             },
             GameState::Combat => {
                 if window.is_key_down(Key::A) {
-			        // Llamar a la función de ataque del jugador
 			        player_attack(&mut combat_state, &mut enemies_data);
 			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
 			    }
 			    if window.is_key_down(Key::D) {
-			        // Acción de defensa (ejemplo)
-			        // Reduce el daño recibido en el siguiente turno del enemigo
 			        println!("Player defends!");
 			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
 			    }
 			    if window.is_key_down(Key::S) {
-			        // Lanzar hechizo
-			        // Aquí puedes implementar una función de hechizo que acceda a la lista de hechizos en main
 			        println!("Player casts a spell!");
 			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
 			    }
 			    if window.is_key_down(Key::F) {
-			        // Pasar turno
 			        println!("Player passes the turn!");
 			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
 			    }
+                let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);
+                if all_enemies_defeated {
+                    current_state = GameState::Playing;
+                }
                 render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture, &mut combat_state);
             }
         }

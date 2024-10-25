@@ -11,6 +11,7 @@ pub struct PlayerData {
     pub max_mp: i32,
     pub mp: i32,
     pub spells: Vec<String>,
+    pub weakness: Vec<String>,
     pub texture: Texture,
 }
 
@@ -21,7 +22,7 @@ impl Party {
         }
     }
 
-    pub fn add_player(&mut self, name: String, max_hp: i32, hp: i32, max_mp: i32, mp: i32, spells: Vec<String>, texture: Texture) {
+    pub fn add_player(&mut self, name: String, max_hp: i32, hp: i32, max_mp: i32, mp: i32, spells: Vec<String>, weakness: Vec<String>, texture: Texture) {
         self.players_data.push(PlayerData {
             name,
             max_hp,
@@ -29,6 +30,7 @@ impl Party {
             max_mp,
             mp,
             spells,
+            weakness,
             texture
         });
     }

@@ -11,6 +11,7 @@ pub struct EnemyBattle {
     pub max_mp: i32,
     pub mp: i32,
     pub spells: Vec<String>,
+    pub weakness: Vec<String>,
     pub enemy_texture: Texture
 }
 
@@ -21,7 +22,7 @@ impl EnemiesData {
         }
     }
 
-    pub fn add_enemy(&mut self, name: String, max_hp: i32, hp: i32, max_mp: i32, mp: i32, spells: Vec<String>, enemy_texture: Texture) {
+    pub fn add_enemy(&mut self, name: String, max_hp: i32, hp: i32, max_mp: i32, mp: i32, spells: Vec<String>, weakness: Vec<String>, enemy_texture: Texture) {
         self.enemies.push(EnemyBattle {
             name,
             max_hp,
@@ -29,6 +30,7 @@ impl EnemiesData {
             max_mp,
             mp,
             spells,
+            weakness,
             enemy_texture
         });
     }

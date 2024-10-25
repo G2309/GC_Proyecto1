@@ -4,6 +4,7 @@ use crate::FrameBuffer;
 use crate::Texture;
 use crate::Party;
 use crate::EnemiesData;
+use rand::Rng;
 
 enum Action {
     Attack,
@@ -84,7 +85,7 @@ pub fn render_combat_ui(
         framebuffer.draw2D_texture(&player_data.texture, 125 + (325 * index), 655);
         render_text(framebuffer, &player_name, 140 + (325 * index), 765, Color::new(255, 255, 255));
 
-        let turn_color = if !combat_state.is_player_turn && combat_state.current_turn == index {
+        let turn_color = if combat_state.is_player_turn && combat_state.current_turn == index {
             Color::new(0, 255, 0)
         } else {
             Color::new(255, 0, 0)
@@ -92,7 +93,41 @@ pub fn render_combat_ui(
         framebuffer.draw_rect(hp_bar_x + (325 * index), 764, 10, 10, turn_color);
         framebuffer.draw_rect_outline(hp_bar_x + (325 * index), 764, 10, 10, Color::new(255, 255, 255));
     }
+}
 
+pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesData) {
+    let mut rng = rand::thread_rng();
+    let is_critical = rng.gen_bool(0.2);
+
+    if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
+        let damage = if is_critical {
+            20 
+        } else {
+            10
+        };
+
+        enemy.hp = enemy.hp.saturating_sub(damage);
+    }
+    combat_state.next_turn(is_critical, 3, 1);
+}
+
+pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
+    let mut rng = rand::thread_rng();
+    let action_is_spell = rng.gen_bool(0.5);
+    
+    let target = &mut party.players_data[combat_state.current_turn];
+    let damage = if action_is_spell {
+        if target.weakness.contains(&"magic".to_string()) {
+            15 
+        } else {
+            10
+        }
+    } else {
+        8 
+    };
+
+    target.hp = target.hp.saturating_sub(damage);
+    combat_state.next_turn(false, 3, 1);
 }
 
 impl CombatState {

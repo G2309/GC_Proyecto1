@@ -28,7 +28,7 @@ use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
 use rusttype::{Font, Scale, point};
-use combat::render_combat_ui;
+use crate::combat::{render_combat_ui, CombatState};
 use party::Party;
 use enemiesParty::EnemiesData;
 
@@ -280,6 +280,8 @@ fn main() {
 
     enemies_data.add_enemy(String::from("Preta"),100, 100, 50, 50, [String::from("agi"), String::from("zan"), String::from("charge")].to_vec(), enemy_0_texture);
 
+    let mut combat_state = CombatState::new();
+
     let wall_texture: HashMap<char, usize> = HashMap::from([
         ('+', 0),
         ('|', 0),
@@ -363,7 +365,7 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture);
+                    render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture, &mut combat_state);
             }
         }
 

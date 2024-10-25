@@ -269,8 +269,8 @@ fn main() {
     let player_1_portrait = Texture::new("src/textures/portrait02.png");
     let player_2_portrait = Texture::new("src/textures/portrait03.png");
 
-    party.add_player(85, 85, 50, 50, [String::from("zio"), String::from("zan")].to_vec(), player_0_portrait);
-    party.add_player(105, 105, 15, 15, [String::from("dia")].to_vec(), player_1_portrait);
+    party.add_player(85, 35, 50, 50, [String::from("zio"), String::from("zan")].to_vec(), player_0_portrait);
+    party.add_player(105, 105, 25, 25, [String::from("dia")].to_vec(), player_1_portrait);
     party.add_player(75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(), player_2_portrait);
 
     // Enemies

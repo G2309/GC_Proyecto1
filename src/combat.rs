@@ -16,6 +16,21 @@ pub fn render_combat_ui(
     // draw enemy
     for (index, enemies) in enemiesdata.enemies.iter().enumerate() {
         framebuffer.draw2D_texture(&enemies.enemy_texture, 350, 100);
+
+        framebuffer.draw_rect(285, 25, 450, 65, Color::new(0, 0, 0)); 
+        
+        let enemy_hp_text = format!("Enemy HP: {} / {}", enemies.hp, enemies.max_hp);
+        let enemy_name = format!("Preta");
+        
+        // Dibujar un cuadro para el HP del enemigo (barra de vida)
+        framebuffer.draw_rect(300, 60, enemies.hp as usize, 20, Color::new(255, 0, 0)); // Barra de HP
+        framebuffer.draw_rect_outline(300, 60, enemies.max_hp as usize, 20, Color::new(255, 255, 255)); // Contorno de la barra de HP
+
+        // Renderizar el texto de HP
+        render_text(framebuffer, &enemy_hp_text, 550, 75, Color::new(255, 255, 255));
+        render_text(framebuffer, &enemy_hp_text, 550, 75, Color::new(255, 255, 255));
+        render_text(framebuffer, &enemy_name, 485, 45, Color::new(255, 255, 255));
+
     }
 
     let bar_height = 20;

@@ -152,7 +152,7 @@ impl CombatState {
         }
     }
 
-    fn next_turn(&mut self, is_critical: bool, party_size: usize, enemy_size:usize) {
+    pub fn next_turn(&mut self, is_critical: bool, party_size: usize, enemy_size:usize) {
         if is_critical {
             // Es para mantener el turno en true
             return;

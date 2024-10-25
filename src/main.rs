@@ -28,7 +28,7 @@ use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
 use rusttype::{Font, Scale, point};
-use crate::combat::{render_combat_ui, CombatState};
+use crate::combat::{render_combat_ui, CombatState, player_attack};
 use party::Party;
 use enemiesParty::EnemiesData;
 
@@ -369,7 +369,29 @@ fn main() {
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
             GameState::Combat => {
-                    render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture, &mut combat_state);
+                if window.is_key_down(Key::A) {
+			        // Llamar a la función de ataque del jugador
+			        player_attack(&mut combat_state, &mut enemies_data);
+			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			    }
+			    if window.is_key_down(Key::D) {
+			        // Acción de defensa (ejemplo)
+			        // Reduce el daño recibido en el siguiente turno del enemigo
+			        println!("Player defends!");
+			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			    }
+			    if window.is_key_down(Key::S) {
+			        // Lanzar hechizo
+			        // Aquí puedes implementar una función de hechizo que acceda a la lista de hechizos en main
+			        println!("Player casts a spell!");
+			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			    }
+			    if window.is_key_down(Key::F) {
+			        // Pasar turno
+			        println!("Player passes the turn!");
+			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			    }
+                render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture, &mut combat_state);
             }
         }
 

@@ -393,7 +393,7 @@ fn main() {
                 if all_enemies_defeated {
                     current_state = GameState::Playing;
                 }
-                render_combat_ui(&mut framebuffer, &party, &enemies_data, &background_texture, &mut combat_state);
+                render_combat_ui(&mut framebuffer, &mut party, &enemies_data, &background_texture, &mut combat_state);
             }
         }
 

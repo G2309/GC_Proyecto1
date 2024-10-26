@@ -21,12 +21,16 @@ pub struct CombatState {
 
 pub fn render_combat_ui(
     framebuffer: &mut FrameBuffer,
-    party: &Party,
+    party: &mut Party,
     enemiesdata: &EnemiesData,
     background_texture: &Texture,
     combat_state: &mut CombatState,
     ) {
     framebuffer.draw_texture(&background_texture, 0, 0); 
+
+    if !combat_state.is_player_turn {
+        enemy_action(combat_state, party);
+    }
 
     // draw enemy
     for (index, enemies) in enemiesdata.enemies.iter().enumerate() {

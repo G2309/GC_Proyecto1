@@ -5,6 +5,8 @@ use crate::Texture;
 use crate::Party;
 use crate::EnemiesData;
 use rand::Rng;
+use std::thread::sleep;
+use std::time::Duration;
 
 enum Action {
     Attack,
@@ -98,7 +100,7 @@ pub fn render_combat_ui(
         framebuffer.draw_rect_outline(hp_bar_x + (325 * index), 764, 10, 10, Color::new(255, 255, 255));
     }
     
-    let actions = ["Attack", "Defend", "Spell", "Pass"];
+    let actions = ["Attack  [a]", "Defend   [d]", "Spell    [s]", "Pass    [f]"];
     let mut y_pos = 170;
 
     framebuffer.draw_rect(26, 125, 275, 150, Color::new(0, 0, 0));
@@ -114,7 +116,7 @@ pub fn render_combat_ui(
 
 pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesData) {
     let mut rng = rand::thread_rng();
-    let is_critical = rng.gen_bool(0.2);
+    let is_critical = rng.gen_bool(0.015);
 
     if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
         let damage = if is_critical {
@@ -126,6 +128,7 @@ pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesDa
         enemy.hp = enemy.hp.saturating_sub(damage);
     }
     combat_state.next_turn(is_critical, 3, 1);
+    sleep(Duration::from_millis(150));
 }
 
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
@@ -135,16 +138,17 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     let target = &mut party.players_data[combat_state.current_turn];
     let damage = if action_is_spell {
         if target.weakness.contains(&"magic".to_string()) {
-            15 
+            35 
         } else {
-            10
+            17
         }
     } else {
-        8 
+        14
     };
 
     target.hp = target.hp.saturating_sub(damage);
     combat_state.next_turn(false, 3, 1);
+    sleep(Duration::from_millis(150));
 }
 
 impl CombatState {
@@ -158,19 +162,22 @@ impl CombatState {
 
     pub fn next_turn(&mut self, is_critical: bool, party_size: usize, enemy_size:usize) {
         if is_critical {
-            // Es para mantener el turno en true
             return;
         }
 
         if self.is_player_turn {
-            self.current_turn = (self.current_turn + 1) % party_size;
-            if self.current_turn == 0 {
-                self.is_player_turn = false;
+            // Avanzar turno entre jugadores del party
+            self.current_turn += 1;
+            if self.current_turn > party_size {
+                self.is_player_turn = false; // Cambia a turno de los enemigos
+                self.current_turn = 0; // Reiniciar turno para enemigos
             }
         } else {
-            self.current_turn = (self.current_turn + 1) % enemy_size;
-            if self.current_turn == 0 {
-                self.is_player_turn = true;
+            // Avanzar turno entre enemigos
+            self.current_turn += 1;
+            if self.current_turn > enemy_size {
+                self.is_player_turn = true; // Cambia a turno de los jugadores
+                self.current_turn = 0; // Reiniciar turno para el party
             }
         }
     }

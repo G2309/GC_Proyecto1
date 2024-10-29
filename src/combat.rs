@@ -17,6 +17,7 @@ enum Action {
 
 pub struct CombatState {
     current_turn: usize,
+    iteration: usize,
     is_player_turn: bool,
     action: Action,
 }
@@ -127,8 +128,8 @@ pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesDa
 
         enemy.hp = enemy.hp.saturating_sub(damage);
     }
+    sleep(Duration::from_millis(250));
     combat_state.next_turn(is_critical, 3, 1);
-    sleep(Duration::from_millis(150));
 }
 
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
@@ -155,6 +156,7 @@ impl CombatState {
     pub fn new() -> Self {
         Self {
             current_turn: 0,
+            iteration: 0,
             is_player_turn: true,
             action: Action::Pass,
         }
@@ -164,21 +166,17 @@ impl CombatState {
         if is_critical {
             return;
         }
-
-        if self.is_player_turn {
-            // Avanzar turno entre jugadores del party
-            self.current_turn += 1;
-            if self.current_turn > party_size {
-                self.is_player_turn = false; // Cambia a turno de los enemigos
-                self.current_turn = 0; // Reiniciar turno para enemigos
-            }
-        } else {
-            // Avanzar turno entre enemigos
-            self.current_turn += 1;
-            if self.current_turn > enemy_size {
-                self.is_player_turn = true; // Cambia a turno de los jugadores
-                self.current_turn = 0; // Reiniciar turno para el party
-            }
+        sleep(Duration::from_millis(150));
+        self.current_turn += 1;
+        
+        if self.current_turn == 3 && self.is_player_turn == true {
+            self.is_player_turn = false;
+            self.current_turn = 0;
+        } else if self.current_turn == 2 && self.iteration > 2 && self.is_player_turn == true{
+            self.current_turn = 0;
+        } else if self.is_player_turn == false {
+            self.is_player_turn = true;
         }
+
     }
 }

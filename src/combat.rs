@@ -117,26 +117,28 @@ pub fn render_combat_ui(
 
 pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesData) {
     let mut rng = rand::thread_rng();
-    let is_critical = rng.gen_bool(0.015);
+    let is_critical = rng.gen_bool(0.2);
+    let attack_percent = rng.gen_range(0..17);
 
     if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
         let damage = if is_critical {
-            20 
+            26 + attack_percent 
         } else {
-            10
+            10 + attack_percent 
         };
 
         enemy.hp = enemy.hp.saturating_sub(damage);
     }
     sleep(Duration::from_millis(250));
-    combat_state.next_turn(is_critical, 3, 1);
+    combat_state.next_turn(is_critical, 3);
 }
 
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     let mut rng = rand::thread_rng();
     let action_is_spell = rng.gen_bool(0.5);
     
-    let target = &mut party.players_data[combat_state.current_turn];
+    let target_index = rng.gen_range(0..party.players_data.len());
+    let target = &mut party.players_data[target_index];
     let damage = if action_is_spell {
         if target.weakness.contains(&"magic".to_string()) {
             35 
@@ -148,7 +150,7 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     };
 
     target.hp = target.hp.saturating_sub(damage);
-    combat_state.next_turn(false, 3, 1);
+    combat_state.next_turn(false, 3);
     sleep(Duration::from_millis(150));
 }
 
@@ -162,21 +164,33 @@ impl CombatState {
         }
     }
 
-    pub fn next_turn(&mut self, is_critical: bool, party_size: usize, enemy_size:usize) {
+    pub fn next_turn(&mut self, is_critical: bool, party_size: usize) {
         if is_critical {
-            return;
-        }
-        sleep(Duration::from_millis(150));
-        self.current_turn += 1;
-        
-        if self.current_turn == 3 && self.is_player_turn == true {
-            self.is_player_turn = false;
-            self.current_turn = 0;
-        } else if self.current_turn == 2 && self.iteration > 2 && self.is_player_turn == true{
-            self.current_turn = 0;
-        } else if self.is_player_turn == false {
-            self.is_player_turn = true;
+            return; 
         }
 
+        let mut rng = rand::thread_rng();
+
+        if self.is_player_turn {
+            let mut next_turn;
+            loop {
+                next_turn = rng.gen_range(0..party_size); 
+                if next_turn != self.current_turn {
+                    break;
+                }
+            }
+            self.current_turn = next_turn;
+            self.iteration += 1;
+
+            if self.iteration >= 3 {
+                self.is_player_turn = false;
+                self.current_turn = 0;
+                self.iteration = 0; 
+            }
+        } else {
+            self.is_player_turn = true; 
+            self.current_turn = rng.gen_range(0..party_size); 
+        }
     }
+
 }

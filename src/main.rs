@@ -40,7 +40,7 @@ enum GameState {
     Title,
     Menu,
     Playing,
-    Combat
+    Combat(usize),
 }
 
 fn cell_to_color(cell: char) -> Color {
@@ -146,11 +146,11 @@ fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>,
 }
 
 fn move_enemies_3d(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, current_state: &mut GameState) {
-    for enemy in enemies.iter_mut() {
+    for (i, enemy) in enemies.iter_mut().enumerate() {
         if !enemy.is_visible {continue;}
         let distance = (enemy.pos - player.pos).magnitude();
         if distance <= block_size as f32 * 0.5 {
-            *current_state = GameState::Combat;
+            *current_state = GameState::Combat(i);
             enemy.is_visible = false;
         } else if distance <= block_size as f32 * 3.0 {
             enemy.move_towards(&player.pos, map, block_size);
@@ -372,22 +372,22 @@ fn main() {
                 render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0,&map);
                 render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
             },
-            GameState::Combat => {
+            GameState::Combat(enemy_index) => {
                 if window.is_key_down(Key::A) {
 			        player_attack(&mut combat_state, &mut enemies_data);
-			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::D) {
 			        println!("Player defends!");
-			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::S) {
 			        println!("Player casts a spell!");
-			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::F) {
 			        println!("Player passes the turn!");
-			        combat_state.next_turn(false, party.players_data.len(), enemies_data.enemies.len());
+			        combat_state.next_turn(false, party.players_data.len());
 			    }
                 let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);
                 if all_enemies_defeated {

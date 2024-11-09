@@ -130,18 +130,29 @@ pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesDa
         enemy.hp = enemy.hp.saturating_sub(damage);
     }
     sleep(Duration::from_millis(250));
-    combat_state.next_turn(is_critical, 3);
+    //combat_state.next_turn(is_critical, 3);
+}
+
+pub fn player_defend(combat_state: &mut CombatState, party: &mut Party) {
+    if let Some(player) = party.players_data.get_mut(combat_state.current_turn) {
+        player.is_defending = true;  
+    }
+    sleep(Duration::from_millis(250));
+    //combat_state.next_turn(false, party.players_data.len()); 
 }
 
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     let mut rng = rand::thread_rng();
     let action_is_spell = rng.gen_bool(0.5);
     
+    // Seleccionar un objetivo aleatorio de entre los aliados
     let target_index = rng.gen_range(0..party.players_data.len());
     let target = &mut party.players_data[target_index];
-    let damage = if action_is_spell {
+
+    // Calcular el daño, considerando si el objetivo está en modo defensa
+    let base_damage = if action_is_spell {
         if target.weakness.contains(&"magic".to_string()) {
-            35 
+            35
         } else {
             17
         }
@@ -149,10 +160,24 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
         14
     };
 
-    target.hp = target.hp.saturating_sub(damage);
-    combat_state.next_turn(false, 3);
+    // Reducir el daño si el jugador está defendiendo
+    let actual_damage = if target.is_defending {
+        (base_damage as f32 * 0.5) as i32  // Reducir el daño en un 50% si está defendiendo
+    } else {
+        base_damage
+    };
+
+    // Aplicar daño y desactivar estado de defensa
+    target.hp = target.hp.saturating_sub(actual_damage);
+    for player in &mut party.players_data {
+        player.is_defending = false;  // Terminar estado de defensa para todos los jugadores
+    }
+
+    // Avanzar el turno
+    combat_state.next_turn(false, party.players_data.len());
     sleep(Duration::from_millis(150));
 }
+
 
 impl CombatState {
     pub fn new() -> Self {
@@ -166,31 +191,18 @@ impl CombatState {
 
     pub fn next_turn(&mut self, is_critical: bool, party_size: usize) {
         if is_critical {
-            return; 
+            return;
+        }
+        sleep(Duration::from_millis(150));
+        self.current_turn += 1;
+        
+        if self.current_turn == 3 && self.is_player_turn == true {
+            self.is_player_turn = false;
+        } else if self.is_player_turn == false {
+            self.is_player_turn = true;
+            self.current_turn = 0;
         }
 
-        let mut rng = rand::thread_rng();
-
-        if self.is_player_turn {
-            let mut next_turn;
-            loop {
-                next_turn = rng.gen_range(0..party_size); 
-                if next_turn != self.current_turn {
-                    break;
-                }
-            }
-            self.current_turn = next_turn;
-            self.iteration += 1;
-
-            if self.iteration >= 3 {
-                self.is_player_turn = false;
-                self.current_turn = 0;
-                self.iteration = 0; 
-            }
-        } else {
-            self.is_player_turn = true; 
-            self.current_turn = rng.gen_range(0..party_size); 
-        }
     }
 
 }

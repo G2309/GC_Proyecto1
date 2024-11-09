@@ -274,11 +274,11 @@ fn main() {
     let player_2_portrait = Texture::new("src/textures/portrait03.png");
 
     party.add_player(String::from("Walter"), 85, 85, 50, 50, [String::from("zio"), String::from("zan")].to_vec(),
-        [].to_vec(), player_0_portrait);
+        [].to_vec(), player_0_portrait, false);
     party.add_player(String::from("Flynn"), 105, 105, 25, 25, [String::from("dia")].to_vec(),
-        [].to_vec(), player_1_portrait);
+        [].to_vec(), player_1_portrait, false);
     party.add_player(String::from("Isabeu"), 75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(),
-        [].to_vec(), player_2_portrait);
+        [].to_vec(), player_2_portrait, false);
 
     // Enemies
     let mut enemies_data = EnemiesData::new();

@@ -28,7 +28,7 @@ use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
 use rusttype::{Font, Scale, point};
-use crate::combat::{render_combat_ui, CombatState, player_attack};
+use crate::combat::{render_combat_ui, CombatState, player_attack, player_defend};
 use party::Party;
 use enemiesParty::EnemiesData;
 
@@ -378,7 +378,7 @@ fn main() {
 			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::D) {
-			        println!("Player defends!");
+                    player_defend(&mut combat_state, &mut party);
 			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::S) {

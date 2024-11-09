@@ -16,7 +16,7 @@ enum Action {
 }
 
 pub struct CombatState {
-    current_turn: usize,
+    pub current_turn: usize,
     iteration: usize,
     is_player_turn: bool,
     action: Action,
@@ -130,7 +130,6 @@ pub fn player_attack(combat_state: &mut CombatState, enemiesdata: &mut EnemiesDa
         enemy.hp = enemy.hp.saturating_sub(damage);
     }
     sleep(Duration::from_millis(250));
-    //combat_state.next_turn(is_critical, 3);
 }
 
 pub fn player_defend(combat_state: &mut CombatState, party: &mut Party) {
@@ -138,18 +137,15 @@ pub fn player_defend(combat_state: &mut CombatState, party: &mut Party) {
         player.is_defending = true;  
     }
     sleep(Duration::from_millis(250));
-    //combat_state.next_turn(false, party.players_data.len()); 
 }
 
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     let mut rng = rand::thread_rng();
     let action_is_spell = rng.gen_bool(0.5);
     
-    // Seleccionar un objetivo aleatorio de entre los aliados
     let target_index = rng.gen_range(0..party.players_data.len());
     let target = &mut party.players_data[target_index];
 
-    // Calcular el daño, considerando si el objetivo está en modo defensa
     let base_damage = if action_is_spell {
         if target.weakness.contains(&"magic".to_string()) {
             35
@@ -160,21 +156,17 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
         14
     };
 
-    // Reducir el daño si el jugador está defendiendo
     let actual_damage = if target.is_defending {
-        (base_damage as f32 * 0.5) as i32  // Reducir el daño en un 50% si está defendiendo
+        (base_damage as f32 * 0.5) as i32 
     } else {
         base_damage
     };
 
-    // Aplicar daño y desactivar estado de defensa
     target.hp = target.hp.saturating_sub(actual_damage);
     for player in &mut party.players_data {
-        player.is_defending = false;  // Terminar estado de defensa para todos los jugadores
+        player.is_defending = false;
     }
 
-    // Avanzar el turno
-    combat_state.next_turn(false, party.players_data.len());
     sleep(Duration::from_millis(150));
 }
 

@@ -173,6 +173,34 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     sleep(Duration::from_millis(150));
 }
 
+pub fn player_spell(
+    combat_state: &mut CombatState,
+    enemiesdata: &mut EnemiesData,
+    spell_name: &str,
+    party: &mut Party,
+) {
+    let mut rng = rand::thread_rng();
+    let is_critical = rng.gen_bool(0.15); // 15% probabilidad de golpe crítico
+
+    if let Some(player) = party.players_data.get_mut(combat_state.current_turn) {
+        if player.spells.contains(&spell_name.to_string()) && player.mp >= 10 {
+            // Resta 10 MP como coste del hechizo (puedes ajustar según sea necesario)
+            player.mp -= 10;
+            if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
+                let base_damage = if enemy.weakness.contains(&spell_name.to_string()) {
+                    30  
+                } else {
+                    15 
+                };
+                let damage = if is_critical { base_damage * 2 } else { base_damage };
+                enemy.hp = enemy.hp.saturating_sub(damage);
+                sleep(Duration::from_millis(250));
+            }
+        } else {
+        }
+    }
+}
+
 
 impl CombatState {
     pub fn new() -> Self {

@@ -28,7 +28,7 @@ use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
 use rusttype::{Font, Scale, point};
-use crate::combat::{render_combat_ui, CombatState, player_attack, player_defend};
+use crate::combat::{render_combat_ui, CombatState, player_attack, player_defend, player_spell};
 use party::Party;
 use enemiesParty::EnemiesData;
 
@@ -267,7 +267,7 @@ fn main() {
 
     party.add_player(String::from("Walter"), 85, 85, 50, 50, [String::from("zio"), String::from("zan")].to_vec(),
         [].to_vec(), player_0_portrait, false);
-    party.add_player(String::from("Flynn"), 105, 105, 25, 25, [String::from("dia")].to_vec(),
+    party.add_player(String::from("Flynn"), 105, 105, 30, 30, [String::from("dia")].to_vec(),
         [].to_vec(), player_1_portrait, false);
     party.add_player(String::from("Isabeu"), 75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(),
         [].to_vec(), player_2_portrait, false);
@@ -374,11 +374,10 @@ fn main() {
 			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::S) {
-			        println!("Player casts a spell!");
+                    player_spell(&mut combat_state, &mut enemies_data, "bufu", &mut party);
 			        combat_state.next_turn(false, party.players_data.len());
 			    }
 			    if window.is_key_down(Key::F) {
-			        println!("Player passes the turn!");
 			        combat_state.next_turn(false, party.players_data.len());
 			    }
                 let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);

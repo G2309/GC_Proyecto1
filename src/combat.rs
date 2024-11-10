@@ -11,7 +11,7 @@ use std::time::Duration;
 pub struct CombatState {
     pub current_turn: usize,
     is_player_turn: bool,
-    is_spell_active: bool,
+    pub is_spell_active: bool,
 }
 
 pub fn render_combat_ui(

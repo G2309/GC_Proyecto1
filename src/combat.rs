@@ -31,9 +31,12 @@ pub fn render_combat_ui(
         if let Some(player) = party.players_data.get(combat_state.current_turn) {
             framebuffer.draw_rect(650, 125, 200, (player.spells.len() * 30) as usize, Color::new(0, 0, 0));
             framebuffer.draw_rect_outline(650, 125, 200, (player.spells.len() * 30) as usize, Color::new(255, 255, 255));
+            let spell_keys = ['I', 'O', 'P'];
             for (index, spell) in player.spells.iter().enumerate() {
-                let spell_text = format!("[{}] {}", index + 1, spell);
+                if let Some(&key) = spell_keys.get(index) {
+                let spell_text = format!("[{}] {}", key, spell);
                 render_text(framebuffer, &spell_text, 660, 145 + (index * 30), Color::new(255, 255, 255), None);
+            }
             }
         }
     }

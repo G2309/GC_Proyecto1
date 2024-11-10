@@ -379,6 +379,23 @@ fn main() {
                     //player_spell(&mut combat_state, &mut enemies_data, "bufu", &mut party);
                     //combat_state.next_turn(false, party.players_data.len());
 			    }
+                if combat_state.is_spell_active {
+			        if let Some(player) = party.players_data.get(combat_state.current_turn) {
+			            let spell_to_cast = if window.is_key_down(Key::I) {
+			                player.spells.get(0).cloned()
+			            } else if window.is_key_down(Key::O) {
+			                player.spells.get(1).cloned()
+			            } else if window.is_key_down(Key::P) {
+			                player.spells.get(2).cloned()
+			            } else {
+			                None
+			            };
+			            if let Some(spell) = spell_to_cast {
+			                player_spell(&mut combat_state, &mut enemies_data, &spell, &mut party);
+			                combat_state.next_turn(false, party.players_data.len());
+			            }
+			        }
+			    }
 			    if window.is_key_down(Key::F) {
 			        combat_state.next_turn(false, party.players_data.len());
 			    }

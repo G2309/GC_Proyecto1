@@ -8,18 +8,9 @@ use rand::Rng;
 use std::thread::sleep;
 use std::time::Duration;
 
-enum Action {
-    Attack,
-    Defend,
-    Spell,
-    Pass
-}
-
 pub struct CombatState {
     pub current_turn: usize,
-    iteration: usize,
     is_player_turn: bool,
-    action: Action,
 }
 
 pub fn render_combat_ui(
@@ -180,11 +171,10 @@ pub fn player_spell(
     party: &mut Party,
 ) {
     let mut rng = rand::thread_rng();
-    let is_critical = rng.gen_bool(0.15); // 15% probabilidad de golpe crítico
+    let is_critical = rng.gen_bool(0.15);
 
     if let Some(player) = party.players_data.get_mut(combat_state.current_turn) {
         if player.spells.contains(&spell_name.to_string()) && player.mp >= 10 {
-            // Resta 10 MP como coste del hechizo (puedes ajustar según sea necesario)
             player.mp -= 10;
             if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
                 let base_damage = if enemy.weakness.contains(&spell_name.to_string()) {
@@ -206,9 +196,7 @@ impl CombatState {
     pub fn new() -> Self {
         Self {
             current_turn: 0,
-            iteration: 0,
             is_player_turn: true,
-            action: Action::Pass,
         }
     }
 

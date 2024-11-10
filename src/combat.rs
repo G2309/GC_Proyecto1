@@ -11,6 +11,7 @@ use std::time::Duration;
 pub struct CombatState {
     pub current_turn: usize,
     is_player_turn: bool,
+    is_spell_active: bool,
 }
 
 pub fn render_combat_ui(
@@ -25,7 +26,17 @@ pub fn render_combat_ui(
     if !combat_state.is_player_turn {
         enemy_action(combat_state, party);
     }
-
+    // Spell menu
+    if combat_state.is_spell_active {
+        if let Some(player) = party.players_data.get(combat_state.current_turn) {
+            framebuffer.draw_rect(650, 125, 200, (player.spells.len() * 30) as usize, Color::new(0, 0, 0));
+            framebuffer.draw_rect_outline(650, 125, 200, (player.spells.len() * 30) as usize, Color::new(255, 255, 255));
+            for (index, spell) in player.spells.iter().enumerate() {
+                let spell_text = format!("[{}] {}", index + 1, spell);
+                render_text(framebuffer, &spell_text, 660, 145 + (index * 30), Color::new(255, 255, 255), None);
+            }
+        }
+    }
     // draw enemy
     for (index, enemies) in enemiesdata.enemies.iter().enumerate() {
         framebuffer.draw2D_texture(&enemies.enemy_texture, 350, 100);
@@ -197,7 +208,12 @@ impl CombatState {
         Self {
             current_turn: 0,
             is_player_turn: true,
+            is_spell_active: false,
         }
+    }
+
+    pub fn activate_spell(&mut self) {
+        self.is_spell_active = true;
     }
 
     pub fn next_turn(&mut self, is_critical: bool, party_size: usize) {
@@ -215,6 +231,7 @@ impl CombatState {
             self.is_player_turn = true;
             self.current_turn = 0; 
         }
+        self.is_spell_active = false;
     }
 
 }

@@ -101,13 +101,13 @@ pub fn render_combat_ui(
         framebuffer.draw_rect_outline(hp_bar_x + (325 * index), 764, 10, 10, Color::new(255, 255, 255));
     }
     
-    let actions = ["Attack  [a]", "Defend   [d]", "Spell    [s]", "Pass    [f]"];
+    let actions = [" Attack - - - - - - - [a]", " Defend - - - - - - - [d]", " Spell  - - - - - - - [s]", " Pass   - - - - - - - [f]"];
     let mut y_pos = 170;
 
     framebuffer.draw_rect(26, 125, 275, 150, Color::new(0, 0, 0));
     framebuffer.draw_rect_outline(26, 125, 275, 150, Color::new(255, 255, 255));
     
-    render_text(framebuffer,"What would you do?", 30, 145, Color::new(255, 255, 255));
+    render_text(framebuffer," What would you do?", 30, 145, Color::new(255, 255, 255));
 
     for action in actions.iter() {
         render_text(framebuffer, action, 30, y_pos, Color::new(255,255,255));
@@ -164,7 +164,6 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     };
 
     target.hp = target.hp.saturating_sub(actual_damage);
-    println!("Enemy attacks! Player {} receives {} damage.", target.name, actual_damage);
 
     for player in &mut party.players_data {
         player.is_defending = false;

@@ -50,8 +50,8 @@ pub fn render_combat_ui(
         framebuffer.draw_rect_outline(300, 60, enemies.max_hp as usize, 20, Color::new(255, 255, 255)); // Contorno de la barra de HP
 
         // Renderizar el texto de HP
-        render_text(framebuffer, &enemy_hp_text, 550, 75, Color::new(255, 255, 255));
-        render_text(framebuffer, &enemy_name, 485, 45, Color::new(255, 255, 255));
+        render_text(framebuffer, &enemy_hp_text, 550, 75, Color::new(255, 255, 255), None);
+        render_text(framebuffer, &enemy_name, 485, 45, Color::new(255, 255, 255), None);
 
         let turn_color = if !combat_state.is_player_turn && combat_state.current_turn == index {
             Color::new(0, 255, 0)
@@ -81,16 +81,16 @@ pub fn render_combat_ui(
         // HP Bar
         framebuffer.draw_rect(hp_bar_x + (325 * index), 585, player_data.hp as usize, bar_height, Color::new(255, 0, 0));
         framebuffer.draw_rect_outline(hp_bar_x + (325 * index), 585, player_data.max_hp as usize, bar_height, Color::new(255, 255, 255));  // Contorno
-        render_text(framebuffer, &hp_text, 150 + (325 * index), 600, Color::new(255, 255, 255));
+        render_text(framebuffer, &hp_text, 150 + (325 * index), 600, Color::new(255, 255, 255), None);
         
         // MP Bar
         framebuffer.draw_rect(mp_bar_x + (325 * index), 625, player_data.mp as usize, bar_height, Color::new(0, 0, 255));
         framebuffer.draw_rect_outline(mp_bar_x + (325 * index), 625, player_data.max_mp as usize, bar_height, Color::new(255, 255, 255));  // Contorno
-        render_text(framebuffer, &mp_text, 150 + (325 * index), 640, Color::new(255, 255, 255));
+        render_text(framebuffer, &mp_text, 150 + (325 * index), 640, Color::new(255, 255, 255), None);
 
         // Textura del jugador
         framebuffer.draw2D_texture(&player_data.texture, 125 + (325 * index), 655);
-        render_text(framebuffer, &player_name, 140 + (325 * index), 765, Color::new(255, 255, 255));
+        render_text(framebuffer, &player_name, 140 + (325 * index), 765, Color::new(255, 255, 255), None);
 
         let turn_color = if combat_state.is_player_turn && combat_state.current_turn == index {
             Color::new(0, 255, 0)
@@ -107,10 +107,10 @@ pub fn render_combat_ui(
     framebuffer.draw_rect(26, 125, 275, 150, Color::new(0, 0, 0));
     framebuffer.draw_rect_outline(26, 125, 275, 150, Color::new(255, 255, 255));
     
-    render_text(framebuffer," What would you do?", 30, 145, Color::new(255, 255, 255));
+    render_text(framebuffer," What would you do?", 30, 145, Color::new(255, 255, 255), None);
 
     for action in actions.iter() {
-        render_text(framebuffer, action, 30, y_pos, Color::new(255,255,255));
+        render_text(framebuffer, action, 30, y_pos, Color::new(255,255,255), None);
         y_pos += 25;
     } 
 }

@@ -211,24 +211,17 @@ fn stop_audio(sink: &Sink) {
     sink.stop(); 
 }
 
-fn render_text(framebuffer: &mut FrameBuffer, text: &str, x: usize, y: usize, color: Color) {
-    // Cargar la fuente
+fn render_text(
+    framebuffer: &mut FrameBuffer, text: &str, x: usize, y: usize, color: Color, scale: Option<Scale>) {
     let font_data = include_bytes!("textures/GohuFont11NerdFont-Regular.ttf") as &[u8];
     let font = Font::try_from_bytes(font_data).unwrap();
-
-    let scale = Scale {
-        x: 20.0, 
-        y: 20.0,
-    };
-
+    let scale = scale.unwrap_or(Scale { x: 20.0, y: 20.0 });
     let start_point = point(0.0, 0.0);
-
     for glyph in font.layout(text, scale, start_point) {
         if let Some(bounding_box) = glyph.pixel_bounding_box() {
             glyph.draw(|gx, gy, v| {
                 let pixel_x = x + gx as usize + bounding_box.min.x as usize;
                 let pixel_y = y + gy as usize + bounding_box.min.y as usize;
-
                 if v > 0.5 {
                     framebuffer.set_current_color(color);
                     framebuffer.point(pixel_x, pixel_y);
@@ -237,7 +230,6 @@ fn render_text(framebuffer: &mut FrameBuffer, text: &str, x: usize, y: usize, co
         }
     }
 }
-
 
 fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();

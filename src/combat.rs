@@ -156,6 +156,7 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
         14
     };
 
+    // Apply reduced damage if the player is defending
     let actual_damage = if target.is_defending {
         (base_damage as f32 * 0.5) as i32 
     } else {
@@ -163,10 +164,13 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     };
 
     target.hp = target.hp.saturating_sub(actual_damage);
+    println!("Enemy attacks! Player {} receives {} damage.", target.name, actual_damage);
+
     for player in &mut party.players_data {
         player.is_defending = false;
     }
 
+    combat_state.is_player_turn = true;
     sleep(Duration::from_millis(150));
 }
 
@@ -186,15 +190,16 @@ impl CombatState {
             return;
         }
         sleep(Duration::from_millis(150));
-        self.current_turn += 1;
-        
-        if self.current_turn == 3 && self.is_player_turn == true {
-            self.is_player_turn = false;
-        } else if self.is_player_turn == false {
-            self.is_player_turn = true;
-            self.current_turn = 0;
-        }
 
+        self.current_turn += 1;
+
+        if self.is_player_turn && self.current_turn >= party_size {
+            self.is_player_turn = false;
+            self.current_turn = 0; 
+        } else if !self.is_player_turn && self.current_turn >= 3 { 
+            self.is_player_turn = true;
+            self.current_turn = 0; 
+        }
     }
 
 }

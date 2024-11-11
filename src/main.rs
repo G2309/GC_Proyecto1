@@ -42,6 +42,8 @@ enum GameState {
     Menu,
     Playing,
     Combat(usize),
+    GameOver,
+    Win,
 }
 
 fn cell_to_color(cell: char) -> Color {
@@ -259,6 +261,8 @@ fn main() {
 
     let background_texture = Texture::new("src/textures/Battle01.png");
 
+    let win_texture = Texture::new("src/textures/win.jpg");
+    let game_over_texture = Texture::new("src/textures/gameover.jpg");
     // Party
     let mut party = Party::new();
 
@@ -401,10 +405,21 @@ fn main() {
 			    }
                 let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);
                 if all_enemies_defeated {
-                    current_state = GameState::Playing;
+                    current_state = GameState::Win;
+                }
+                let all_allies_defeated = party.players_data.iter().all(|party| party.hp <=0);
+                if all_allies_defeated {
+                    current_state = GameState::GameOver;
                 }
                 render_combat_ui(&mut framebuffer, &mut party, &enemies_data, &background_texture, &mut combat_state);
-            }
+            },
+            GameState::GameOver => {
+                framebuffer.draw_texture(&game_over_texture, 0, 0)
+            },
+            GameState::Win => {
+                framebuffer.draw_texture(&win_texture, 0, 0)
+            },
+
         }
 
         let pixel_buffer: Vec<u32> = framebuffer.buffer.iter().map(|color| color.to_u32()).collect();

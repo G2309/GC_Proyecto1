@@ -47,7 +47,7 @@ pub fn render_combat_ui(
         framebuffer.draw_rect(285, 25, 450, 65, Color::new(0, 0, 0)); 
         framebuffer.draw_rect_outline(285, 25, 450, 65, Color::new(255, 255, 255));
         
-        let enemy_hp_text = format!("Enemy HP: {} / {}", enemies.hp, enemies.max_hp);
+        let enemy_hp_text = format!("Enemy HP: {} / {}", enemies.hp.max(0), enemies.max_hp);
         let enemy_name = format!("{}", enemies.name);
         
         // HP
@@ -75,8 +75,8 @@ pub fn render_combat_ui(
     let mp_bar_x = 26;
 
     for (index, player_data) in party.players_data.iter().enumerate() {
-        let hp_text = format!("HP: {} / {}", player_data.hp, player_data.max_hp);
-        let mp_text = format!("MP: {} / {}", player_data.mp, player_data.max_mp);
+        let hp_text = format!("HP: {} / {}", player_data.hp.max(0), player_data.max_hp);
+        let mp_text = format!("MP: {} / {}", player_data.mp.max(0), player_data.max_mp);
         let player_name = format!("{}", player_data.name);
 
         // Render HP y MP de cada jugador
@@ -147,9 +147,18 @@ pub fn player_defend(combat_state: &mut CombatState, party: &mut Party) {
 pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
     let mut rng = rand::thread_rng();
     let action_is_spell = rng.gen_bool(0.5);
-    
-    let target_index = rng.gen_range(0..party.players_data.len());
-    let target = &mut party.players_data[target_index];
+
+    let mut alive_players: Vec<_> = party.players_data
+        .iter_mut()
+        .filter(|player| player.hp > 0)
+        .collect();
+
+    if alive_players.is_empty() {
+        return;
+    }
+
+    let target_index = rng.gen_range(0..alive_players.len());
+    let target = &mut alive_players[target_index];
 
     let base_damage = if action_is_spell {
         if target.weakness.contains(&"magic".to_string()) {
@@ -161,9 +170,8 @@ pub fn enemy_action(combat_state: &mut CombatState, party: &mut Party) {
         14
     };
 
-    // Apply reduced damage if the player is defending
     let actual_damage = if target.is_defending {
-        (base_damage as f32 * 0.5) as i32 
+        (base_damage as f32 * 0.5) as i32
     } else {
         base_damage
     };

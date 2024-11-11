@@ -31,7 +31,6 @@ use rusttype::{Font, Scale, point};
 use crate::combat::{render_combat_ui, CombatState, player_attack, player_defend, player_spell};
 use party::Party;
 use enemiesParty::EnemiesData;
-use std::thread::sleep;
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 800;
@@ -372,16 +371,14 @@ fn main() {
             GameState::Combat(enemy_index) => {
                 if window.is_key_down(Key::A) {
 			        player_attack(&mut combat_state, &mut enemies_data);
-			        combat_state.next_turn(false, party.players_data.len());
+			        combat_state.next_turn(false, &party, &enemies_data);
 			    }
 			    if window.is_key_down(Key::D) {
                     player_defend(&mut combat_state, &mut party);
-			        combat_state.next_turn(false, party.players_data.len());
+			        combat_state.next_turn(false, &party, &enemies_data);
 			    }
 			    if window.is_key_down(Key::S) {
                     combat_state.activate_spell();
-                    //player_spell(&mut combat_state, &mut enemies_data, "bufu", &mut party);
-                    //combat_state.next_turn(false, party.players_data.len());
 			    }
                 if combat_state.is_spell_active {
 			        if let Some(player) = party.players_data.get(combat_state.current_turn) {
@@ -396,12 +393,12 @@ fn main() {
 			            };
 			            if let Some(spell) = spell_to_cast {
 			                player_spell(&mut combat_state, &mut enemies_data, &spell, &mut party);
-			                combat_state.next_turn(false, party.players_data.len());
+			                combat_state.next_turn(false, &party, &enemies_data);
 			            }
 			        }
 			    }
 			    if window.is_key_down(Key::F) {
-			        combat_state.next_turn(false, party.players_data.len());
+			        combat_state.next_turn(false, &party, &enemies_data);
 			    }
                 let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);
                 if all_enemies_defeated {

@@ -227,22 +227,35 @@ impl CombatState {
         self.is_spell_active = true;
     }
 
-    pub fn next_turn(&mut self, is_critical: bool, party_size: usize) {
+    pub fn next_turn(&mut self, is_critical: bool, party: &Party, enemiesdata: &EnemiesData) {
         if is_critical {
-            return;
+            return; 
         }
         sleep(Duration::from_millis(150));
 
-        self.current_turn += 1;
-
-        if self.is_player_turn && self.current_turn >= party_size {
-            self.is_player_turn = false;
-            self.current_turn = 0; 
-        } else if !self.is_player_turn && self.current_turn >= 3 { 
-            self.is_player_turn = true;
-            self.current_turn = 0; 
+        loop {
+            self.current_turn += 1;
+            if self.is_player_turn {
+                if self.current_turn >= party.players_data.len() {
+                    self.is_player_turn = false;
+                    self.current_turn = 0;
+                }
+                if let Some(player) = party.players_data.get(self.current_turn) {
+                    if player.hp > 0 {
+                        break;
+                    }
+                }
+            } else {
+                if let Some(enemy) = enemiesdata.enemies.get(0) {
+                    if enemy.hp > 0 {
+                        break;
+                    } else {
+                        self.is_player_turn = true;
+                        self.current_turn = 0;
+                    }
+                }
+            }
         }
         self.is_spell_active = false;
     }
-
 }

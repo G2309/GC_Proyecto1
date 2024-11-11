@@ -273,7 +273,7 @@ fn main() {
         [].to_vec(), player_0_portrait, false);
     party.add_player(String::from("Flynn"), 105, 105, 30, 30, [String::from("dia")].to_vec(),
         [].to_vec(), player_1_portrait, false);
-    party.add_player(String::from("Isabeu"), 75, 75, 100, 100, [String::from("recarm"), String::from("bufu"), String::from("agi")].to_vec(),
+    party.add_player(String::from("Isabeu"), 75, 75, 100, 100, [String::from("mudo"), String::from("bufu"), String::from("agi")].to_vec(),
         [].to_vec(), player_2_portrait, false);
 
     // Enemies

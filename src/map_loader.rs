@@ -42,6 +42,11 @@ pub fn load_map(filename: &str) -> MapData {
     }
 }
 
+pub fn change_map(map_files: &Vec<&str>, current_map_index: &mut usize) -> MapData {
+    *current_map_index = (*current_map_index + 1) % map_files.len();
+    load_map(map_files[*current_map_index])
+}
+
 pub fn print_map(map: &Vec<Vec<char>>) {
     for row in map {
         println!("{}", row.iter().collect::<String>());

@@ -196,7 +196,24 @@ pub fn player_spell(
     let is_critical = rng.gen_bool(0.15);
 
     if let Some(player) = party.players_data.get_mut(combat_state.current_turn) {
-        if player.spells.contains(&spell_name.to_string()) && player.mp >= 10 {
+        // Si el hechizo es "dia"
+        if spell_name == "dia" {
+            if player.mp >= 10 {
+                player.mp -= 10;
+
+                // Buscar al miembro del grupo con menor HP
+                if let Some(target) = party.players_data.iter_mut()
+                    .filter(|p| p.hp > 0)  // Solo jugadores con HP > 0
+                    .min_by_key(|p| p.hp)  // Encontrar al jugador con menor HP
+                {
+                    // Curar 20 HP (ajustar según lo que consideres adecuado)
+                    target.hp = (target.hp + 20).min(target.max_hp);  // No superar el máximo HP
+                    sleep(Duration::from_millis(250));  // Retraso de acción
+                }
+            }
+        }
+        // Si el hechizo no es "dia", atacar al enemigo como antes
+        else if player.spells.contains(&spell_name.to_string()) && player.mp >= 10 {
             player.mp -= 10;
             if let Some(enemy) = enemiesdata.enemies.get_mut(0) {
                 let base_damage = if enemy.weakness.contains(&spell_name.to_string()) {
@@ -208,7 +225,6 @@ pub fn player_spell(
                 enemy.hp = enemy.hp.saturating_sub(damage);
                 sleep(Duration::from_millis(250));
             }
-        } else {
         }
     }
 }

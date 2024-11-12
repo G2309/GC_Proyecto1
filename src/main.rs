@@ -233,6 +233,12 @@ fn render_text(
     }
 }
 
+fn reset_enemies_state(enemies_data: &mut EnemiesData) {
+    for enemy in &mut enemies_data.enemies {
+        enemy.hp = enemy.max_hp; 
+    }
+}
+
 fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let menu_sink = Sink::try_new(&stream_handle).unwrap();
@@ -333,6 +339,8 @@ fn main() {
 
     let mut current_state = GameState::Title;
 
+    let mut map_changed = false;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let current_time = Instant::now();
         let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
@@ -340,6 +348,11 @@ fn main() {
 
         let fps = 1.0 / elapsed_time;
         framebuffer.clear();
+        
+        if map_changed {  
+            reset_enemies_state(&mut enemies_data);
+            map_changed = false;
+        }
 
         match current_state {
             GameState::Title => {
@@ -364,19 +377,17 @@ fn main() {
 			        Actions::check_doors(&player, &mut map);
 			    }
 			    
-			    // Cambia de mapa si todos los enemigos han sido derrotados y el jugador está frente a 'g'
 			    let all_enemies_defeated = enemies.iter().all(|enemy| enemy.is_visible == false);
 			    if all_enemies_defeated && Actions::check_goal(&player, &map) && window.is_key_down(Key::N) {
 			        let map_data = change_map(&map_files, &mut map_index);
 			        map = map_data.map;
 			        player.pos = map_data.player_pos * block_size as f32;
-			        
-			        // Actualizar las posiciones de los enemigos
 			        enemies.clear();
 			        for enemy_pos in map_data.enemies_pos {
 			            let enemy = Enemy::new(enemy_pos.x * block_size as f32, enemy_pos.y * block_size as f32);
 			            enemies.push(enemy);
 			        }
+                    map_changed = true;
 			    }	
 			    process_event(&window, &mut player, &map, block_size);
 			    move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);

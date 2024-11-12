@@ -14,7 +14,7 @@ mod enemiesParty;
 use core::f32::consts::PI;
 use crate::framebuffer::FrameBuffer;
 use crate::color::Color;
-use crate::map_loader::load_map;
+use crate::map_loader::{load_map, change_map};
 use crate::player::{Player, process_event};
 use crate::raycasting::cast_ray;
 use minifb::{Window, WindowOptions, Key};
@@ -242,7 +242,9 @@ fn main() {
     let window_height = HEIGHT;
     let block_size = CELL_SIZE;
     
-    let map_data = load_map("./src/map.txt");
+    let map_files = vec!["./src/map.txt", "./src/map1.txt", "./src/map2.txt"];
+    let mut map_index = 0;
+    let map_data = load_map(map_files[map_index]);
     let mut map = map_data.map;
 
     let textures = vec![
@@ -359,14 +361,29 @@ fn main() {
             },
             GameState::Playing => {
                 if window.is_key_down(Key::E) {
-                    Actions::check_doors(&player,&mut map);
-                }
-                process_event(&window, &mut player, &map, block_size);
-                move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
-                move_enemies_3d(&mut enemies, &player, &map, block_size, &mut current_state);
-                render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
-                render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0,&map);
-                render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture,&enemy_texture);
+			        Actions::check_doors(&player, &mut map);
+			    }
+			    
+			    // Cambia de mapa si todos los enemigos han sido derrotados y el jugador está frente a 'g'
+			    let all_enemies_defeated = enemies.iter().all(|enemy| enemy.is_visible == false);
+			    if all_enemies_defeated && Actions::check_goal(&player, &map) && window.is_key_down(Key::N) {
+			        let map_data = change_map(&map_files, &mut map_index);
+			        map = map_data.map;
+			        player.pos = map_data.player_pos * block_size as f32;
+			        
+			        // Actualizar las posiciones de los enemigos
+			        enemies.clear();
+			        for enemy_pos in map_data.enemies_pos {
+			            let enemy = Enemy::new(enemy_pos.x * block_size as f32, enemy_pos.y * block_size as f32);
+			            enemies.push(enemy);
+			        }
+			    }	
+			    process_event(&window, &mut player, &map, block_size);
+			    move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
+			    move_enemies_3d(&mut enemies, &player, &map, block_size, &mut current_state);
+			    render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
+			    render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0, &map);
+			    render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture, &enemy_texture);
             },
             GameState::Combat(enemy_index) => {
                 if window.is_key_down(Key::A) {
@@ -402,7 +419,7 @@ fn main() {
 			    }
                 let all_enemies_defeated = enemies_data.enemies.iter().all(|enemy| enemy.hp <= 0);
                 if all_enemies_defeated {
-                    current_state = GameState::Win;
+                    current_state = GameState::Playing;
                 }
                 let all_allies_defeated = party.players_data.iter().all(|party| party.hp <=0);
                 if all_allies_defeated {

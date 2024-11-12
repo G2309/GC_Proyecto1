@@ -54,8 +54,27 @@ impl Actions {
             let check_x = check_pos.x as usize;
             let check_y = check_pos.y as usize;
 
-            // Verifica si hay una meta 'g' alrededor del jugador
             if map[check_y][check_x] == 'g' {
+                return true;
+            }
+        }
+        false
+    }
+    pub fn check_win(player: &Player, map: &Vec<Vec<char>>) -> bool {
+        let player_pos = Vec2::new(player.pos.x / 50.0, player.pos.y / 50.0);
+        let directions = vec![
+            Vec2::new(1.0, 0.0),
+            Vec2::new(-1.0, 0.0),
+            Vec2::new(0.0, 1.0),
+            Vec2::new(0.0, -1.0),
+        ];
+
+        for dir in directions {
+            let check_pos = player_pos + dir;
+            let check_x = check_pos.x as usize;
+            let check_y = check_pos.y as usize;
+
+            if map[check_y][check_x] == 'w' {
                 return true;
             }
         }

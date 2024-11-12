@@ -395,6 +395,9 @@ fn main() {
 			    render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
 			    render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0, &map);
 			    render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture, &enemy_texture);
+                if Actions::check_win(&player, &map) && window.is_key_down(Key::N) {
+                    current_state = GameState::Win;
+                }
             },
             GameState::Combat(enemy_index) => {
                 if window.is_key_down(Key::A) {

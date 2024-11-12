@@ -41,7 +41,7 @@ Descripción de los archivos del proyecto:
         - Presiona `S` para activar un hechizo.
         - Presiona `I`, `O` o `P` para lanzar un hechizo específico.
         - Presiona `F` para pasar el turno.
-    - **Cambiar de mapa**: Cuando todos los enemigos sean derrotados y el objetivo sea alcanzable, presiona `N` para proceder al siguiente mapa.
+    - **Cambiar de mapa**: Cuando todos los enemigos sean derrotados y el objetivo este delante, presiona `N` para proceder al siguiente mapa.
 ## Estados del Juego
 
 El juego incluye diferentes estados que dictan el flujo del juego:

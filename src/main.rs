@@ -90,24 +90,30 @@ fn render2d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
     }
 }
 
-fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>>, block_size: usize, textures:&Vec<Texture>, wall_texture: &HashMap<char,usize>) {
+fn render3d(
+    framebuffer: &mut FrameBuffer,
+    player: &Player,
+    maze: &Vec<Vec<char>>,
+    block_size: usize,
+    textures: &Vec<Texture>,
+    wall_texture: &HashMap<char, Vec<usize>>,
+    animation_frame: usize,  // Nuevo parámetro para controlar la animación
+) {
     let num_rays = framebuffer.width;
 
+    // Configuración del cielo y suelo
     for i in 0..num_rays {
         for j in 0..(framebuffer.height as f32 / 2.0) as usize {
-            framebuffer.set_current_color(Color::new(0, 0, 0)); 
+            framebuffer.set_current_color(Color::new(0, 0, 0));
             framebuffer.point(i, j);
         }
-
-        framebuffer.set_current_color(Color::new(135, 206, 235)); 
+        framebuffer.set_current_color(Color::new(135, 206, 235));
         for j in (framebuffer.height / 2)..framebuffer.height {
             framebuffer.point(i, j);
         }
     }
 
     let hh = framebuffer.height as f32 / 2.0;
-    framebuffer.set_current_color(Color::new(255, 0, 0));
-
     for i in 0..num_rays {
         let current_ray = i as f32 / num_rays as f32;
         let a = player.a - (player.fov / 2.0) + (player.fov * current_ray);
@@ -118,21 +124,24 @@ fn render3d(framebuffer: &mut FrameBuffer, player: &Player, maze: &Vec<Vec<char>
         let stake_height = (hh / distance_to_wall) * distance_to_projection_plane;
         let stake_top = (hh - (stake_height / 2.0)).max(0.0) as usize;
         let stake_bottom = (hh + (stake_height / 2.0)).min(framebuffer.height as f32 - 1.0) as usize;
+
         let wall_char = intersect.impact;
-        if let Some(&texture_index) = wall_texture.get(&wall_char) {
+
+        if let Some(texture_indices) = wall_texture.get(&wall_char) {
+            // Selección de la textura animada en función del tiempo
+            let texture_index = texture_indices[animation_frame % texture_indices.len()];
             let wall_tex = &textures[texture_index];
-	        
-	        let texture_x = ((intersect.distance % 1.0) * wall_tex.width as f32) as u32; 	
-	        for y in stake_top..stake_bottom {
-	            let texture_y = (((y as f32 - stake_top as f32) / stake_height as f32) * wall_tex.height as f32) as u32;
-	            let color = wall_tex.get_pixel_color(texture_x, texture_y);
-	            framebuffer.set_current_color(color);
-	            framebuffer.point(i, y);
+
+            let texture_x = ((intersect.distance % 1.0) * wall_tex.width as f32) as u32;
+            for y in stake_top..stake_bottom {
+                let texture_y = (((y as f32 - stake_top as f32) / stake_height as f32) * wall_tex.height as f32) as u32;
+                let color = wall_tex.get_pixel_color(texture_x, texture_y);
+                framebuffer.set_current_color(color);
+                framebuffer.point(i, y);
             }
         }
     }
 }
-
 
 fn move_enemies(enemies: &mut Vec<Enemy>, player: &Player, map: &Vec<Vec<char>>, block_size: usize, framebuffer: &mut FrameBuffer, scale_factor: f32, xo: usize, yo: usize) {
     for enemy in enemies.iter_mut() {
@@ -266,7 +275,9 @@ fn main() {
     let textures = vec![
         Texture::new("src/textures/wall.jpg"),
         Texture::new("src/textures/wall-break.jpg"),
-        Texture::new("src/textures/WallG.png"),
+        Texture::new("src/textures/portal1.png"),
+        Texture::new("src/textures/portal2.png"),
+        Texture::new("src/textures/portal3.png"),
     ];
 
     let title_texture = Texture::new("src/textures/title.jpg");
@@ -304,11 +315,13 @@ fn main() {
 
     let mut combat_state = CombatState::new();
 
-    let wall_texture: HashMap<char, usize> = HashMap::from([
-        ('+', 0),
-        ('|', 0),
-        ('-', 0),
-        ('d', 1),
+    let wall_texture: HashMap<char, Vec<usize>> = HashMap::from([
+        ('+', vec![0]),
+        ('|', vec![0]),
+        ('-', vec![0]),
+        ('d', vec![1]),
+        ('w', vec![2,3,4]),
+        ('g', vec![2,3,4]),
     ]);
 
     let framebuffer_width = WIDTH;
@@ -351,6 +364,9 @@ fn main() {
 
     let mut map_changed = false;
 
+    let mut animation_frame = 0;
+    let mut time_counter = 0;
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let current_time = Instant::now();
         let elapsed_time = current_time.duration_since(last_time).as_secs_f64();
@@ -358,6 +374,14 @@ fn main() {
 
         let fps = 1.0 / elapsed_time;
         framebuffer.clear();
+
+        time_counter += 1;
+        if time_counter % 10 == 0 { 
+            animation_frame += 1;
+            if animation_frame >= 3 {
+                animation_frame = 0;
+            }
+        }
         
         if map_changed {  
             reset_enemies_state(&mut enemies_data);
@@ -403,7 +427,7 @@ fn main() {
 			    process_event(&window, &mut player, &map, block_size);
 			    move_enemies(&mut enemies, &player, &map, block_size, &mut framebuffer, scale_factor, xo, yo);
 			    move_enemies_3d(&mut enemies, &player, &map, block_size, &mut current_state);
-			    render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture);
+			    render3d(&mut framebuffer, &player, &map, block_size, &textures, &wall_texture, animation_frame);
 			    render_enemies_3d(&mut framebuffer, &enemies, &player, &enemy_texture3d, block_size, 50.0, &map);
 			    render2d(&mut framebuffer, &player, &map, block_size, xo, yo, scale_factor, &enemies, &player_texture, &enemy_texture);
                 if Actions::check_win(&player, &map) && window.is_key_down(Key::N) {

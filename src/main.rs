@@ -23,7 +23,7 @@ use crate::enemy::Enemy;
 use crate::actions::Actions;
 use texture::Texture;
 use std::collections::HashMap;
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, Sink, Source};
 use std::fs::File;
 use std::io::BufReader;
 use nalgebra_glm::Vec2;
@@ -204,13 +204,22 @@ fn render_enemies_3d(
 }
 
 fn play_audio(file_path: &str, sink: &Sink) {
-    let file = File::open(file_path).unwrap();
-    let source = Decoder::new(BufReader::new(file)).unwrap();
-    sink.append(source);
+    if let Ok(file) = File::open(file_path) {
+        let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
+        sink.append(source.repeat_infinite());
+    }
 }
 
 fn stop_audio(sink: &Sink) {
     sink.stop(); 
+}
+
+fn play_sound_effect(file_path: &str, sfx_sink: &Sink, speed: f32) {
+    if let Ok(file) = File::open(file_path) {
+        let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
+        let speed_up = source.speed(speed);
+        sfx_sink.append(speed_up);
+    }
 }
 
 fn render_text(
@@ -243,6 +252,7 @@ fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let menu_sink = Sink::try_new(&stream_handle).unwrap();
     let game_sink = Sink::try_new(&stream_handle).unwrap();
+    let sfx_sink = Sink::try_new(&stream_handle).unwrap();
 
     let window_width = WIDTH;
     let window_height = HEIGHT;
@@ -375,6 +385,7 @@ fn main() {
             GameState::Playing => {
                 if window.is_key_down(Key::E) {
 			        Actions::check_doors(&player, &mut map);
+                    play_sound_effect("src/music/door.mp3", &sfx_sink, 2.5);
 			    }
 			    
 			    let all_enemies_defeated = enemies.iter().all(|enemy| enemy.is_visible == false);
@@ -401,6 +412,7 @@ fn main() {
             },
             GameState::Combat(enemy_index) => {
                 if window.is_key_down(Key::A) {
+                    play_sound_effect("src/music/attack.mp3", &sfx_sink, 2.5);
 			        player_attack(&mut combat_state, &mut enemies_data);
 			        combat_state.next_turn(false, &party, &enemies_data);
 			    }
@@ -409,6 +421,7 @@ fn main() {
 			        combat_state.next_turn(false, &party, &enemies_data);
 			    }
 			    if window.is_key_down(Key::S) {
+                    play_sound_effect("src/music/spell.mp3", &sfx_sink, 2.5);
                     combat_state.activate_spell();
 			    }
                 if combat_state.is_spell_active {
